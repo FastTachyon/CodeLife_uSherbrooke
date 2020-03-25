@@ -3,6 +3,8 @@
 
 #define SERIAL_BAUD 115200
 
+#define NB_MA_PRESSURE 20
+
 BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
 
@@ -11,15 +13,28 @@ BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
 const int buzzer_pin = 9; //buzzer to arduino pin 9
 const int duration = 200;
 float pressure = 100000;
+float disco_dP = 500;
 float high_pressure = 103000;
 float low_pressure = 98000;
-
+float atm = 0; // Atmosphere pressure 
+float MA_pressure[NB_MA_PRESSURE];
+float MA_pressure_index = 0;
+float current_MA_pressure = 0;
 /* Modulo */ 
 
 int mod(int a, int b) {
   int c = a % b;
   // Inline if (cond) ? si vrai : si faux
   return (c < 0) ? c + b : c;}
+
+/* Moving average */
+float MA(){
+  float MA_pressure_value = 0;
+  for (int i = 0 ; i < NB_MA_PRESSURE; i++){
+     MA_pressure_value += MA_pressure[i]/NB_MA_PRESSURE;
+  }
+  return MA_pressure_value;
+}
 
 
 /* Fuite / Disconnection */
@@ -32,7 +47,8 @@ int disconnect_tones[2] = {2000, 1000};
 int disconnect_index = 0;
 
 void check_disconnect(){
-  if (pressure < low_pressure )
+  current_MA_pressure = MA();
+  if ((current_MA_pressure - atm) < disco_dP )
   {
     disconnect_state = true;
      /* Initiallisation de la déconnection */
@@ -179,6 +195,9 @@ void setup(){
      default:
        Serial.println("Found UNKNOWN sensor! Error!");
   }
+
+  pressure = printBME280Data(&Serial);
+  atm = pressure;
 }
 
 void loop(){
@@ -186,4 +205,5 @@ check_disconnect();
 check_HP();
 check_LP(); 
 pressure = printBME280Data(&Serial);
+MA_pressure[mod(MA_pressure_index,NB_MA_PRESSURE)] = pressure;
 }
