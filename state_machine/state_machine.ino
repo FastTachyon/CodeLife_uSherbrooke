@@ -1,11 +1,13 @@
 #define NB_MA_PRESSURE 3
 
 // * Different states of the machine * //
+// Associated variable: current_state
 #define INSPIRATION 1
 #define EXPIRATION 2
 #define STOP 3
 
 // * ALARMS * //
+// Associated variable: alarm
 #define NO_ALARM 0
 #define LOW_PRESSURE 1
 #define HIGH_PRESSURE 2 
