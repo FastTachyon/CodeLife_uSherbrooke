@@ -13,15 +13,19 @@
 #define HIGH_PRESSURE 2 
 #define DISCONNECT 3
 
+
+// * Physical pins needed * //
+
+#define buzzer_pin 9
+#define FiO2_pin A1
+
+
 // *** Doctor variables *** //
 int resp_per_minute;
 int ie_ratio;
 int hp_pressure;
 int lp_pressure;
 int tidal_volume;
-
-// *** Circuit constants *** //
-const int buzzer_pin = 9; //buzzer to arduino pin 9
 
 // *** Measure *** //
 float time_cycle = resp_per_minute / 60.0;
@@ -222,7 +226,7 @@ float current_MA_pressure = 0;
 // Function //
 void check_disconnect(){
   if (current_state == INSPIRATION){
-    // patient pressure is at atmosphere 10% of the inspiration time has passed and  
+    // patient pressure is at atmosphere && 10% of the inspiration time has passed and  
     if (abs(pressure - atm) < disco_dP && (timer_state - timer_state_prev) >= 0.1 * time_inspi)
     {
       alarm = DISCONNECT;
@@ -246,6 +250,27 @@ void sound(){
     sound_index +=1;
   }
 }
+
+// * Read O2 sensor * //
+// Variables //
+float FiO2 = 0;
+float FiO2_percent = {0.2,  0.4} 
+float FiO2_cal_array ={126, 300}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
+float FiO2_slope = 0;
+float FiO2_const = 0;
+// Functions //
+// Calibration via the values inside the array //
+void FiO2_cal(){
+  FiO2_slope = (FiO2_cal_array[1] - FiO2_cal_array[0])/ (FiO2_percent[1]-FiO2_percent[1]);
+  FiO2_const = FiO2_cal_array[0] - FiO2_slope[0]*FiO2_percent[0];
+}
+
+// Detecting FiO2 //
+void FiO2_sense(){
+  // Make sure the O2 sensor is connected to an op-amplifier
+  FiO2 = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
+}
+
 
 // * Read Pressure sensor * //
 // Variables //
