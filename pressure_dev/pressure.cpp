@@ -6,6 +6,7 @@ Pressure_gauge::Pressure_gauge(int addr)
   address = addr;
   pressure = 0;
   temperature =0;
+  offset_pressure=0;
 }
 
 Pressure_gauge::~Pressure_gauge(){}
@@ -25,10 +26,11 @@ float Pressure_gauge::calibrate()
       send();
       delay(20);
       read();
+      Serial.println(pressure);
       sum = sum+ pressure; 
     }
-
-    return pressure/nb; 
+    offset_pressure = pressure/nb;
+    return offset_pressure; 
 }
 void Pressure_gauge::send()
 {
@@ -43,7 +45,7 @@ int Pressure_gauge::read()
 {
     
     Wire.requestFrom(address, 4);
-    if(Wire.available() == 0)
+    if(Wire.available() != 0)
     {
       byte a     = Wire.read(); // first received byte stored here ....Example bytes one: 00011001 10000000
       byte b     = Wire.read(); // second received byte stored here ....Example bytes two: 11100111 00000000
@@ -77,7 +79,7 @@ int Pressure_gauge::read()
   
   
             pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
-            pressure = pressure - 0.4;  
+            pressure = pressure - 0.4-offset_pressure;  
             temperature = (temperature_data * 0.0977) - 50;
   
         return status1; 

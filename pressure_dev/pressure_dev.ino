@@ -17,11 +17,12 @@ void loop()
 {
   Serial.println(count);
   count++;
-  //pressure_gauge.send();
-  //delay(20);
-  //pressure_gauge.read();
-  //Serial.println(pressure_gauge.get_pressure());
-  //Serial.println(pressure_gauge.get_temperature());
+  pressure_gauge.offset_pressure =0;
   Serial.println(pressure_gauge.calibrate());
-  delay(1000);
+  pressure_gauge.send();
+  delay(20);
+  pressure_gauge.read();
+  Serial.println(pressure_gauge.get_pressure());
+  Serial.println(pressure_gauge.get_temperature());
+  delay(10000);
 }
