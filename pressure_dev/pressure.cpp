@@ -4,6 +4,8 @@
 Pressure_gauge::Pressure_gauge(int addr)
 {
   address = addr;
+  pressure = 0;
+  temperature =0;
 }
 
 Pressure_gauge::~Pressure_gauge(){}
@@ -13,7 +15,21 @@ void Pressure_gauge::init()
 {
    Wire.begin(); // wake up I2C bus
 }
+float Pressure_gauge::calibrate()
+{
+    float sum=0;
+    int nb = 10;
+    for(int i=0;i<=nb;i++)
+    {
+      //Serial.println("Miaw");
+      send();
+      delay(20);
+      read();
+      sum = sum+ pressure; 
+    }
 
+    return pressure/nb; 
+}
 void Pressure_gauge::send()
 {
   
@@ -27,7 +43,7 @@ int Pressure_gauge::read()
 {
     
     Wire.requestFrom(address, 4);
-    if(Wire.available() != 0)
+    if(Wire.available() == 0)
     {
       byte a     = Wire.read(); // first received byte stored here ....Example bytes one: 00011001 10000000
       byte b     = Wire.read(); // second received byte stored here ....Example bytes two: 11100111 00000000
@@ -67,7 +83,10 @@ int Pressure_gauge::read()
         return status1; 
         }
 }
-
+void Pressure_gauge::set_offset_pressure(int offset)
+{
+    
+}
 int Pressure_gauge::get_address()
 {
     return address; 
