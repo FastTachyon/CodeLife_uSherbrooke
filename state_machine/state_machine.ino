@@ -15,7 +15,6 @@
 
 
 // * Physical pins needed * //
-
 #define buzzer_pin 9
 #define FiO2_pin A1
 
@@ -57,6 +56,22 @@ int mod(int a, int b) {
   int c = a % b;
   // Inline if (cond) ? si vrai : si faux
   return (c < 0) ? c + b : c;}
+
+// For mean avergae uses
+int mean_float(float *arr, int SizeOfArray ){
+  int test =0;
+  for (int i=0; i<SizeOfArray;i++){
+    test = test + arr[i]/SizeOfArray;  
+  }
+  return test;
+}
+int mean_int(int *arr, int SizeOfArray ){
+  float test =0;
+  for (int i=0; i<SizeOfArray;i++){
+    test = test + arr[i]/SizeOfArray;  
+  }
+  return test;
+}
 
 // *** Bands *** //
 
@@ -253,22 +268,27 @@ void sound(){
 
 // * Read O2 sensor * //
 // Variables //
-float FiO2 = 0;
-float FiO2_percent = {0.2,  0.4} 
-float FiO2_cal_array ={126, 300}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
+float FiO2[3] = {20,20,20}; // Initialize at atmospehre % to evade alarms
+float FiO2_disp = 20;
+int FiO2_index = 0;
+float FiO2_percent[2] = {0.2,  0.4} ;
+float FiO2_cal_array[2] ={126, 300}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
 float FiO2_slope = 0;
 float FiO2_const = 0;
 // Functions //
 // Calibration via the values inside the array //
 void FiO2_cal(){
   FiO2_slope = (FiO2_cal_array[1] - FiO2_cal_array[0])/ (FiO2_percent[1]-FiO2_percent[1]);
-  FiO2_const = FiO2_cal_array[0] - FiO2_slope[0]*FiO2_percent[0];
+  FiO2_const = FiO2_cal_array[0] - FiO2_slope*FiO2_percent[0];
 }
 
 // Detecting FiO2 //
 void FiO2_sense(){
   // Make sure the O2 sensor is connected to an op-amplifier
-  FiO2 = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
+  
+  FiO2[mod(FiO2_index,3)] = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
+  FiO2_disp = mean_float(&FiO2[0],3);
+  FiO2_index +=1;
 }
 
 
