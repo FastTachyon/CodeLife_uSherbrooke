@@ -1,9 +1,9 @@
 #include "pressure.h"
 
 
-Pressure_gauge::Pressure_gauge()
+Pressure_gauge::Pressure_gauge(int addr)
 {
-  
+  address = addr;
 }
 
 Pressure_gauge::~Pressure_gauge(){}
@@ -11,22 +11,23 @@ Pressure_gauge::~Pressure_gauge(){}
 
 void Pressure_gauge::init()
 {
-  
+   Wire.begin(); // wake up I2C bus
 }
 
-void Pressure_gauge::run()
+void Pressure_gauge::send()
 {
-  float pressure, temperature;
+  
   //send a request
-    Wire.beginTransmission(HSCDRRN400MD2A3_I2C); // "Hey, CN75 @ 0x48! Message for you"
+    Wire.beginTransmission(address); // "Hey, CN75 @ 0x48! Message for you"
     Wire.write(1);  // send a bit asking for register one, the data register (as specified by the pdf)
     Wire.endTransmission(); // "Thanks, goodbye..."
     // now get the data from the sensor
- 
-    delay (20);
+}
+int Pressure_gauge::read()
+{
     
-    Wire.requestFrom(HSCDRRN400MD2A3_I2C, 4);
-    if(Wire.available() == 0)
+    Wire.requestFrom(address, 4);
+    if(Wire.available() != 0)
     {
       byte a     = Wire.read(); // first received byte stored here ....Example bytes one: 00011001 10000000
       byte b     = Wire.read(); // second received byte stored here ....Example bytes two: 11100111 00000000
@@ -40,44 +41,42 @@ void Pressure_gauge::run()
      int temperature_data = ((c << 8) + (d & 0xe0)) >> 5;
   
              if ( temperature_data == 65535 ) {
-                 Serial.println("err HSCDRRN400MD2A3 sensor missing");
+                 //Serial.println("err HSCDRRN400MD2A3 sensor missing");
              }
              
              if ( status1 == 1 ) {
-                 Serial.println("warn command mode ");// *Command mode is used for programming the sensor. This mode should not be seen during normal operation.
+                // Serial.println("warn command mode ");// *Command mode is used for programming the sensor. This mode should not be seen during normal operation.
                 // Serial.println(status, BIN);   
              }
              
              if ( status1 == 2 ) {   
-                 Serial.println("warn stale data ");  // if data has already been feched since the last measurement cycle
+                 //Serial.println("warn stale data ");  // if data has already been feched since the last measurement cycle
                 // Serial.println(status, BIN);
              }   
              
              if ( status1 == 3) {
-                 Serial.println("err diagnostic fault "); //When the two status bits are "11", one of the above mentioned diagnostic faults is indicated.
+                 //Serial.println("err diagnostic fault "); //When the two status bits are "11", one of the above mentioned diagnostic faults is indicated.
                 // Serial.println(status, BIN);
              }
   
   
             pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
-            pressure = pressure - 0.4;   //<<<<<<<<<<<<<<<<<<<<<<  Modified
+            pressure = pressure - 0.4;  
             temperature = (temperature_data * 0.0977) - 50;
   
-     
-     
-             Serial.print("status      ");
-             Serial.println(status1, BIN);
-             Serial.print("bridge_data ");
-             Serial.println(bridge_data, DEC);
-             Serial.print("temp_data   ");
-             Serial.println(temperature_data, DEC);
-             Serial.println("");
-  
-             Serial.print("pressure    (BAR) ");
-             Serial.println(pressure);
-             Serial.print("temperature (C) ");
-             Serial.println(temperature);
-             Serial.println("");
-           
-    }
+        return status1; 
+        }
+}
+
+int Pressure_gauge::get_address()
+{
+    return address; 
+}
+float Pressure_gauge::get_pressure()
+{
+    return pressure;
+}
+float Pressure_gauge::get_temperature()
+{
+    return temperature;
 }
