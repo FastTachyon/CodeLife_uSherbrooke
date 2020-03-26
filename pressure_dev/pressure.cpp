@@ -20,16 +20,15 @@ float Pressure_gauge::calibrate()
 {
     float sum=0;
     int nb = 10;
-    for(int i=0;i<=nb;i++)
+    for(int i=0;i<nb;i++)
     {
-      //Serial.println("Miaw");
       send();
       delay(20);
       read();
-      Serial.println(pressure);
       sum = sum+ pressure; 
     }
-    offset_pressure = pressure/nb;
+    offset_pressure = sum/nb;
+
     return offset_pressure; 
 }
 void Pressure_gauge::send()
