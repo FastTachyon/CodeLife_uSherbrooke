@@ -12,6 +12,7 @@
 #define LOW_PRESSURE 1
 #define HIGH_PRESSURE 2 
 #define DISCONNECT 3
+#define LOW_FiO2 4
 
 
 // * Physical pins needed * //
@@ -42,6 +43,7 @@ float high_pressure = 103000;
 float low_pressure = 98000;
 float disco_dP = 500;
 int current_state = 3; // 1 = Inspiration; 2 = Expiration; 3 = Stopped;
+float FiO2 = 20;
 
 int timer_init = 0;
 int timer_current = 0;
@@ -175,7 +177,7 @@ void state_machine(){
    //}
 }
 
-// * Low-Pressure Alarm * //
+// * Low-Pressure Alarm (1) * //
 // Function Variables //
 bool lp_state = false;
 bool lp_state_prev = false;
@@ -199,7 +201,7 @@ void check_LP(){
   }
 }
 
-// * High-Pressure Alarm * //
+// * High-Pressure Alarm (2) * //
 // Function Variables //
 bool hp_state = false;
 bool hp_state_prev = false;
@@ -224,7 +226,7 @@ void check_HP(){
 }
 
 
-// * Disconnect Alarm * //
+// * Disconnect Alarm (3) * //
 // Function Variables //
 bool disconnect_state = false;
 bool disconnect_state_prev = false;
@@ -252,6 +254,25 @@ void check_disconnect(){
     }
   }
 }
+
+// * Low-FiO2 alarm (4) * //
+// Function Variables //
+int FiO2_set = 20;
+int FiO2_delta = 10;
+int FiO2_tones[2] = {1200, 1000};
+// Function //
+void check_FiO2(){
+  if (FiO2 < FiO2_set - FiO2_delta && alarm == NO_ALARM)
+  {
+    alarm = LOW_FiO2;
+     /* DATA to feed to the sound function */
+    //sound_freq = lp_tones;
+    memcpy(sound_freq, FiO2_tones, sizeof(sound_freq[0])*2);
+  }
+  else if (alarm == LOW_FiO2 && FiO2 > FiO2_set - FiO2_delta){
+    alarm = NO_ALARM; 
+  }
+}
 // * SOUND TONES * //
 // Variables //
 int sound_index = 0;
@@ -261,15 +282,14 @@ void sound(){
     noTone(buzzer_pin);
   }
   else{
-    tone(buzzer_pin,sound_freq[sound_index,2]);
+    tone(buzzer_pin,sound_freq[sound_index]);
     sound_index +=1;
   }
 }
 
 // * Read O2 sensor * //
 // Variables //
-float FiO2[3] = {20,20,20}; // Initialize at atmospehre % to evade alarms
-float FiO2_disp = 20;
+float FiO2_raw[3] = {20,20,20}; // Initialize at atmospehre % to evade alarms
 int FiO2_index = 0;
 float FiO2_percent[2] = {0.2,  0.4} ;
 float FiO2_cal_array[2] ={126, 300}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
@@ -286,8 +306,8 @@ void FiO2_cal(){
 void FiO2_sense(){
   // Make sure the O2 sensor is connected to an op-amplifier
   
-  FiO2[mod(FiO2_index,3)] = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
-  FiO2_disp = mean_float(&FiO2[0],3);
+  FiO2_raw[mod(FiO2_index,3)] = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
+  FiO2 = mean_float(&FiO2_raw[0],3);
   FiO2_index +=1;
 }
 
