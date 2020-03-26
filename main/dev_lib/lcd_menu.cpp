@@ -219,7 +219,7 @@ void Lcd_menu::state_display() //State 1
   lcd.print("Off");
   lcd.setCursor(0, 1);
   lcd.print("V:");
-  lcd.print(intToChar(tidalVolume_reading,2));
+  lcd.print(intToChar(tidalVolume_reading*10,3));
   lcd.print(" ");
   lcd.print("P:");
   lcd.print(intToChar(out_pc,2));
@@ -363,6 +363,20 @@ void Lcd_menu::set_Fio2(int fio2)
   out_fio2 = fio2;
 }
 
+/*************************************OTHERS***************************************/
+bool Lcd_menu::get_on_off()
+{
+  return on_off;
+}
+
+/************************************************************************
+  ______            __    
+ /_  __/___  ____  / /____
+  / / / __ \/ __ \/ / ___/
+ / / / /_/ / /_/ / (__  ) 
+/_/  \____/\____/_/____/  
+                               
+ **********************************************************************/
 //Function who return int but in char with 2 or 3 digit, padded with 0. 
  String Lcd_menu::intToChar(int number,int nb_digit)
  {

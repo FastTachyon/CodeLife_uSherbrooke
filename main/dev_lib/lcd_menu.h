@@ -34,7 +34,10 @@ class Lcd_menu
         int tidalVolume_cmd;
         int maxPressure_cmd;
         int respiratoryRate_cmd;
-
+        bool on_off;
+        
+        /************************GET / SET ******************************/
+        //CONFIG
         int get_TidalVolume_cmd();
         int get_MaxPressure();
         int get_RespiratoryRate();
@@ -45,12 +48,15 @@ class Lcd_menu
         void  set_RespiratoryRate_cmd(int rate);
         void  set_IERatio_cmd(int ratio); 
         void  set_cmd_value(int cmd, int value);
-        
+
+        //DISPLAY
         void set_TidalVolume_reading(int volume);
         void set_Pressure(int pressure);
         void set_Fio2(int fio2);
 
-        bool on_off;
+        //OTHERS
+        bool get_on_off();
+       
 
         //display
         //First value is top/down and the second one is which position, so 1 per position
