@@ -1,5 +1,5 @@
 #define NB_MA_PRESSURE 3
-
+#define pi 3.1418
 // * Different states of the machine * //
 // Associated variable: current_state
 #define INSPIRATION 1
@@ -27,6 +27,7 @@ int hp_pressure;
 int lp_pressure;
 int tidal_volume;
 
+
 // *** Measure *** //
 float time_cycle = resp_per_minute / 60.0;
 float time_inspi = ie_ratio * time_cycle;
@@ -44,6 +45,7 @@ float low_pressure = 98000;
 float disco_dP = 500;
 int current_state = 3; // 1 = Inspiration; 2 = Expiration; 3 = Stopped;
 float FiO2 = 20;
+float density = 1.225; // [kg/m^3]
 
 int timer_init = 0;
 int timer_current = 0;
@@ -60,7 +62,7 @@ int mod(int a, int b) {
   return (c < 0) ? c + b : c;}
 
 // For mean avergae uses
-int mean_float(float *arr, int SizeOfArray ){
+float mean_float(float *arr, int SizeOfArray ){
   int test =0;
   for (int i=0; i<SizeOfArray;i++){
     test = test + arr[i]/SizeOfArray;  
@@ -83,6 +85,7 @@ void band1_0() {
   check_disconnect();
   check_HP();
   check_LP();
+  FiO2_sense();
 }
 // Mid priority functions part 1
 void band2_0() {
@@ -90,6 +93,7 @@ void band2_0() {
 }
 // Mid priority functions part 2
 void band2_1() {
+  check_FiO2();
 }
 // Low priority functions part 1
 void band3_0() {
@@ -311,6 +315,25 @@ void FiO2_sense(){
   FiO2_index +=1;
 }
 
+// * Venturi Calculation * //
+// Variables //
+float venturi_speed = 0;
+float venturi_pressure = 0;
+float venturi_small_radi = 0.00635; 
+float venturi_normal_radi = 0.0127;
+int venturi_sensor;
+
+float venturi_small_section = 3.1418*pow(venturi_small_radi,2); 
+float venturi_normal_section = 3.1418*pow(venturi_normal_radi,2); 
+
+void venturi_setup(int adress){
+  venturi_sensor = adress;
+}
+
+void venturi_measure(){
+  //venturi  pressure = read
+  venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
+  }
 
 // * Read Pressure sensor * //
 // Variables //

@@ -43,7 +43,7 @@ int Pressure_gauge::read()
 {
     
     Wire.requestFrom(address, 4);
-    if(Wire.available() == 0)
+    if(Wire.available() != 0)
     {
       byte a     = Wire.read(); // first received byte stored here ....Example bytes one: 00011001 10000000
       byte b     = Wire.read(); // second received byte stored here ....Example bytes two: 11100111 00000000
