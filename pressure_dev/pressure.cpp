@@ -6,6 +6,7 @@ Pressure_gauge::Pressure_gauge(int addr)
   address = addr;
   pressure = 0;
   temperature =0;
+  offset_pressure=0;
 }
 
 Pressure_gauge::~Pressure_gauge(){}
@@ -19,16 +20,16 @@ float Pressure_gauge::calibrate()
 {
     float sum=0;
     int nb = 10;
-    for(int i=0;i<=nb;i++)
+    for(int i=0;i<nb;i++)
     {
-      //Serial.println("Miaw");
       send();
       delay(20);
       read();
       sum = sum+ pressure; 
     }
+    offset_pressure = sum/nb;
 
-    return pressure/nb; 
+    return offset_pressure; 
 }
 void Pressure_gauge::send()
 {
@@ -77,7 +78,7 @@ int Pressure_gauge::read()
   
   
             pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
-            pressure = pressure - 0.4;  
+            pressure = pressure - 0.4-offset_pressure;  
             temperature = (temperature_data * 0.0977) - 50;
   
         return status1; 
