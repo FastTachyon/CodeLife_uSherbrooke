@@ -34,12 +34,12 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   state =0;
 
   //variables
-    out_tv = 0; 
+    tidalVolume_reading = 0; 
     out_pc = 0; 
     out_fio2 = 0;
-    in_tv = 0; 
-    in_mp = 0;
-    in_rr = 0;
+    tidalVolume_cmd = 0; 
+    maxPressure_cmd = 0;
+    respiratoryRate_cmd = 0;
     on_off = false;
 
 
@@ -54,25 +54,25 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   //Config
   config_cursor_pos[0][0] = 11;
   config_cursor_pos[1][0] = 0;
-  config_cursor_pos[0][1] = 14;
+  config_cursor_pos[0][1] = 0;
   config_cursor_pos[1][1] = 1;
-  config_cursor_pos[0][2] = 14;
+  config_cursor_pos[0][2] = 0;
   config_cursor_pos[1][2] = 1;
-  config_cursor_pos[0][3] = 14;
+  config_cursor_pos[0][3] = 0;
   config_cursor_pos[1][3] = 1;
-  config_cursor_pos[0][4] = 14;
+  config_cursor_pos[0][4] = 0;
   config_cursor_pos[1][4] = 1;
   
   config_cursor_pos_size = sizeof(config_cursor_pos[0])/2; 
   config_cursor_state = 0;
-  config_name[TidalVolume]="Tidal Volume"; 
-  config_name[RespiratoryRate]="Respi. Rate "; 
-  config_name[MaxPressure]="Max Pressure"; 
-  config_name[IERatio]="I/E Ratio   "; 
-  config_value[0]=0;
-  config_value[1]=0;
-  config_value[2]=0;
-  config_value[3]=0;
+  config_name[TidalVolume]=     "Tidal Vol(dl) "; 
+  config_name[RespiratoryRate]= "Respi/min     "; 
+  config_name[MaxPressure]=     "Max Press(cm) "; 
+  config_name[IERatio]=         "I/E Ratio   1:"; 
+  config_value[TidalVolume]=40;
+  config_value[RespiratoryRate]=10;
+  config_value[MaxPressure]=20;
+  config_value[IERatio]=20;
   config_list=0;
 }
 
@@ -96,32 +96,40 @@ void Lcd_menu::lcd_run()
       
   }
 }
-
+/**********************************************************************
+   _____ __        __          ______            _____      
+  / ___// /_____ _/ /____     / ____/___  ____  / __(_)___ _
+  \__ \/ __/ __ `/ __/ _ \   / /   / __ \/ __ \/ /_/ / __ `/
+ ___/ / /_/ /_/ / /_/  __/  / /___/ /_/ / / / / __/ / /_/ / 
+/____/\__/\__,_/\__/\___/   \____/\____/_/ /_/_/ /_/\__, /  
+                                                   /____/   
+/**********************************************************************/                                                 
 void Lcd_menu::state_config() //State 1
 {
   int row = min0max100(config_cursor_state-1);
 
   //Refresh the display
   lcd.setCursor(0, 0);
-  lcd.print("Conf");
-  lcd.print("       ");
+  lcd.print("Settings");
+  lcd.print("   ");
   if (on_off){
     lcd.print("Done ");}
   else {
     lcd.print("Start ");}
- 
-  lcd.setCursor(0, 1);
+    
+  config_parser(config_cursor_state);
+ /* lcd.setCursor(0, 1);
   lcd.print(config_name[row]);
-  lcd.print("  ");
+  lcd.print("");
   lcd.print(intToChar(config_value[row],2)); 
-  
+  */
   int cursor_x = config_cursor_pos[0][config_cursor_state];
   int cursor_y = config_cursor_pos[1][config_cursor_state];
   lcd.setCursor(cursor_x,cursor_y);
   lcd.cursor();
 
   
-   //Button logic
+/**************************BUTTON LOGIC **************************/
    int button = read_LCD_buttons();
    if (button == btnDOWN){
       if (config_cursor_state == config_cursor_pos_size-1){}
@@ -135,17 +143,70 @@ void Lcd_menu::state_config() //State 1
    if (button == btnRIGHT){
       if(config_cursor_state==0){}
       else{
-        config_value[config_cursor_state-1]=min0max100(config_value[config_cursor_state-1]+1);}}
+        //config_value[config_cursor_state-1]=min0max100(config_value[config_cursor_state-1]+1);}}
+        set_cmd_value(config_cursor_state-1,min0max100(config_value[config_cursor_state-1]+1));}}
+        
    if (button == btnLEFT){
       if(config_cursor_state==0){}
       else{
-        config_value[config_cursor_state-1]=min0max100(config_value[config_cursor_state-1]-1);}}
+        set_cmd_value(config_cursor_state-1,min0max100(config_value[config_cursor_state-1]-1));}}
+        
    if (button == btnSELECT &&config_cursor_state == 0){
     on_off = true;
     state = 1;
    }
 }
 
+/*********************DISPLAY_FUNCTION*************************/
+void Lcd_menu::config_parser(int index)
+{
+  /*
+   * #define TidalVolume 0
+#define RespiratoryRate 1
+#define MaxPressure 2
+#define IERatio 3
+   */
+  switch (index)
+  {
+    case 0: 
+    case 1: 
+      lcd.setCursor(0, 1);
+      lcd.print("Tidal Vol(ml)");
+      lcd.print("");
+      lcd.print(intToChar(config_value[TidalVolume]*10,3)); 
+      return;
+    case 2:
+      lcd.setCursor(0, 1);
+      lcd.print("Respi/min     ");
+      lcd.print("");
+      lcd.print(intToChar(config_value[RespiratoryRate],2)); 
+      return;
+    case 3:
+      lcd.setCursor(0, 1);
+      lcd.print("Max Press (cm)");
+      lcd.print("");
+      lcd.print(intToChar(config_value[MaxPressure],2)); 
+      return;
+    case 4:
+      lcd.setCursor(0, 1);
+      lcd.print("I/E Ratio  1:");
+      lcd.print("");
+      String data = intToChar(config_value[IERatio],2);
+      lcd.print(data.charAt(0)); 
+      lcd.print("."); 
+      lcd.print(data.charAt(1)); 
+      return;
+  }
+}
+
+/******************************************************************
+   _____ __        __          ____  _            __           
+  / ___// /_____ _/ /____     / __ \(_)________  / /___ ___  __
+  \__ \/ __/ __ `/ __/ _ \   / / / / / ___/ __ \/ / __ `/ / / /
+ ___/ / /_/ /_/ / /_/  __/  / /_/ / (__  ) /_/ / / /_/ / /_/ / 
+/____/\__/\__,_/\__/\___/  /_____/_/____/ .___/_/\__,_/\__, /  
+                                       /_/            /____/   
+******************************************************************/                                       
 void Lcd_menu::state_display() //State 1
 {
 
@@ -153,17 +214,17 @@ void Lcd_menu::state_display() //State 1
   lcd.setCursor(0, 0);
   lcd.print("Mode");
   lcd.print("   ");
-  lcd.print("Conf");
+  lcd.print("Set.");
   lcd.print("  ");
   lcd.print("Off");
   lcd.setCursor(0, 1);
   lcd.print("V:");
-  lcd.print(intToChar(out_tv,2));
+  lcd.print(intToChar(tidalVolume_reading,2));
   lcd.print(" ");
   lcd.print("P:");
   lcd.print(intToChar(out_pc,2));
   lcd.print(" ");
-  lcd.print("02:");
+  lcd.print("O2:");
   lcd.print(intToChar(out_fio2,2));
   lcd.print(" ");
   
@@ -229,8 +290,15 @@ int Lcd_menu::read_LCD_buttons()
 
    return return_value;  // when all others fail, return this...
 }
-
-int Lcd_menu::get_TidalVolume()
+/*************************************************************************************/
+/*   __________________      __   _____ ____________
+  / ____/ ____/_  __/    _/_/  / ___// ____/_  __/
+ / / __/ __/   / /     _/_/    \__ \/ __/   / /   
+/ /_/ / /___  / /    _/_/     ___/ / /___  / /    
+\____/_____/ /_/    /_/      /____/_____/ /_/     
+*/
+/*************************************************************************************/                                              
+int Lcd_menu::get_TidalVolume_cmd()
 {
     return config_value[TidalVolume];
 }
@@ -247,10 +315,44 @@ int Lcd_menu::get_IERatio()
   return config_value[IERatio];
 }
 
-
-void Lcd_menu::set_TidalVolume(int volume)
+void  Lcd_menu::set_cmd_value(int cmd,int value)
 {
-    out_tv = volume; 
+  switch (cmd){
+    case TidalVolume:
+      set_TidalVolume_cmd(value);
+      return;
+    case MaxPressure:
+      set_MaxPressure_cmd(value);
+      return;
+    case RespiratoryRate:
+      set_RespiratoryRate_cmd(value);
+      return;
+    case IERatio:
+      set_IERatio_cmd(value);
+      return;
+  }
+}
+void  Lcd_menu::set_TidalVolume_cmd(int volume)
+{ 
+    config_value[TidalVolume] = minMax(volume, 0, 99);
+}
+void  Lcd_menu::set_MaxPressure_cmd(int pressure)
+{
+    config_value[MaxPressure] = minMax(pressure,10,40);
+}
+void  Lcd_menu::set_RespiratoryRate_cmd(int rate)
+{
+    config_value[RespiratoryRate] = minMax(rate,6,40);
+}
+void  Lcd_menu::set_IERatio_cmd(int ratio)
+{
+    config_value[IERatio] = minMax(ratio,10,40);
+}
+
+/*************************************DISPLAY**************************************/
+void Lcd_menu::set_TidalVolume_reading(int volume)
+{
+    tidalVolume_reading= volume; 
 }
 void Lcd_menu::set_Pressure(int pressure)
 {
@@ -290,4 +392,15 @@ int Lcd_menu::min0max100(int number)
     number = 99;}
 
   return number; 
+}
+
+int Lcd_menu::minMax(int value, int min_value, int max_value)
+{
+  if (value < min_value){
+    value = min_value;}
+  if (value > max_value){
+    value = max_value;}
+
+  return value;
+  
 }

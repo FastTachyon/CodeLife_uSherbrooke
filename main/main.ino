@@ -1,8 +1,12 @@
 #include <GOTStateMachine.h>
 #include <LiquidCrystal.h>
+#include "lcd_menu.h"
+
 const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 int button = 5; 
+
+Lcd_menu lcd_menu; 
 
 //***** State Machine *****
 GOTStateMachine stateMachine(50); // execute every 50 milliseconds
@@ -14,14 +18,6 @@ void calibration();
 void update_reading();
 
 
-int lcd_key     = 0;
-int adc_key_in  = 0;
-#define btnRIGHT  0
-#define btnUP     1
-#define btnDOWN   2
-#define btnLEFT   3
-#define btnSELECT 4
-#define btnNONE   5
 
 void setup() {
 
@@ -30,7 +26,7 @@ void setup() {
   // Print a message to the LCD.
   lcd.print("Hello, World!");
   Serial.begin(9600);
-
+  
   
  
   
@@ -49,8 +45,7 @@ void initialization()
   update_reading();
   lcd.setCursor(0, 0);
   lcd.print("Init");
-
-
+ 
   if (stateMachine.isDelayComplete(1000)) 
   {
     stateMachine.changeState(stopped);
