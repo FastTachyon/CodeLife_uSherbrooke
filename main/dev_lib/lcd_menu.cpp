@@ -44,7 +44,7 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
 
 
   //display 
-  display_cursor_pos[0][0] = 7; // The conf option 
+  display_cursor_pos[0][0] = 9; // The conf option 
   display_cursor_pos[1][0] = 0; 
   display_cursor_pos[0][1] = 13; // the off option
   display_cursor_pos[1][1] = 0;  
@@ -65,15 +65,15 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   
   config_cursor_pos_size = sizeof(config_cursor_pos[0])/2; 
   config_cursor_state = 0;
-  config_name[TidalVolume]=     "Tidal Vol(dl) "; 
-  config_name[RespiratoryRate]= "Respi/min     "; 
-  config_name[MaxPressure]=     "Max Press(cm) "; 
-  config_name[IERatio]=         "I/E Ratio   1:"; 
   config_value[TidalVolume]=40;
   config_value[RespiratoryRate]=10;
   config_value[MaxPressure]=20;
   config_value[IERatio]=20;
   config_list=0;
+
+
+  //Alarm
+  alarm_name[0]=
 }
 
 Lcd_menu::~Lcd_menu()
@@ -95,6 +95,19 @@ void Lcd_menu::lcd_run()
       return;
       
   }
+}
+//************************Alarm*******************************/
+void Lcd_menu::startAlarm(int alarm_nb)
+{
+  alarm=alarm_nb; 
+}
+void Lcd_menu::stopAlarm()
+{
+  alarm=0;
+}
+void Lcd_menu::setMode(int mode)
+{
+  
 }
 /**********************************************************************
    _____ __        __          ______            _____      
@@ -212,10 +225,9 @@ void Lcd_menu::state_display() //State 1
 
   //Refresh the display
   lcd.setCursor(0, 0);
-  lcd.print("Mode");
-  lcd.print("   ");
-  lcd.print("Set.");
-  lcd.print("  ");
+  lcd.print("Mode     ");
+  lcd.print("Set");
+  lcd.print(" ");
   lcd.print("Off");
   lcd.setCursor(0, 1);
   lcd.print("V:");
@@ -291,7 +303,7 @@ int Lcd_menu::read_LCD_buttons()
    return return_value;  // when all others fail, return this...
 }
 /*************************************************************************************/
-/*   __________________      __   _____ ____________
+/* __________________      __   _____ ____________
   / ____/ ____/_  __/    _/_/  / ___// ____/_  __/
  / / __/ __/   / /     _/_/    \__ \/ __/   / /   
 / /_/ / /___  / /    _/_/     ___/ / /___  / /    

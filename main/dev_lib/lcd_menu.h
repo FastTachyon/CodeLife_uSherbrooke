@@ -35,6 +35,14 @@ class Lcd_menu
         int maxPressure_cmd;
         int respiratoryRate_cmd;
         bool on_off;
+
+        //Alarm 
+        void startAlarm(int alarm_nb);
+        void stopAlarm();
+        int alarm = 0;
+        
+        void setMode(int mode);
+        int mode = 0;
         
         /************************GET / SET ******************************/
         //CONFIG
@@ -68,7 +76,6 @@ class Lcd_menu
         int config_cursor_pos[2][5];
         int config_cursor_pos_size;
         int config_cursor_state;
-        String config_name[4]; 
         int config_list;
         int config_value[4];
 
