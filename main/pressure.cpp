@@ -1,9 +1,10 @@
 #include "pressure.h"
 
 
-Pressure_gauge::Pressure_gauge(int addr)
+Pressure_gauge::Pressure_gauge(int addr, int pin)
 {
   address = addr;
+  pressure_pin = pin;
   pressure = 0;
   temperature =0;
   offset_pressure=0;
@@ -35,7 +36,8 @@ void Pressure_gauge::send()
 {
   
   //send a request
-    Wire.beginTransmission(address); // "Hey, CN75 @ 0x48! Message for you"
+    digitalWrite(pressure_pin,OUTPUT);
+    Wire.beginTransmission(address); // "Hey, CN75 @ 0x28! Message for you"
     Wire.write(1);  // send a bit asking for register one, the data register (as specified by the pdf)
     Wire.endTransmission(); // "Thanks, goodbye..."
     // now get the data from the sensor
@@ -80,7 +82,7 @@ int Pressure_gauge::read()
             pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
             pressure = pressure - offset_pressure;  
             temperature = (temperature_data * 0.0977) - 50;
-  
+            digitalWrite(pressure_pin,LOW);
         return status1; 
         }
 }

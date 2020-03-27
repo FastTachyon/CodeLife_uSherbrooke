@@ -24,10 +24,15 @@
 #define FiO2_pin A1
 #define valve_pin 22
 #define limitswitch_pin 26
+#define psensor1_pin 53
+#define psensor2_pin 49
+#define psensor3_pin 45
 
 // * I2C BUS * //
 #define SERIAL_BAUD 9600
 #define psensor1 0x28
+#define psensor2 0x28
+#define psensor3 0x28
 
 // *** Doctor variables *** //
 int resp_per_minute;
@@ -63,7 +68,9 @@ int timer_prev = 0;
 float frequency = 60; // [hz]
 float period = 1/frequency * 1000; // [ms]
 
-Pressure_gauge venturi_sensor(psensor1);
+Pressure_gauge venturi_sensor(psensor1, psensor1);
+Pressure_gauge pressure_sensor2(psensor2, psensor2);
+Pressure_gauge pressure_sensor3(psensor3, psensor3);
 
 // *** Shared functions *** // 
 // Module
@@ -130,9 +137,9 @@ void setup() {
   Wire.begin();
 
   // Setting up the individual functionalities
-  //bme280_setup();
+  bme280_setup();
   pinMode(buzzer_pin, OUTPUT); // Set buzzer
-  //venturi_setup(venturi_sensor);
+  venturi_setup(venturi_sensor);
 
   // Initialisation Timer
   timer_init = millis();
