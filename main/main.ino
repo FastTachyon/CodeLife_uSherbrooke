@@ -24,9 +24,6 @@
 #define FiO2_pin A1
 #define valve_pin 22
 #define limitswitch_pin 26
-#define psensor1_pin 53
-#define psensor2_pin 49
-#define psensor3_pin 45
 
 // * I2C BUS * //
 #define SERIAL_BAUD 9600
@@ -54,23 +51,25 @@ int index;
 int sound_freq[2] = {0,0} ;
 
 float pressure = 0;
+float pressure2 = 0;
 float high_pressure = 103000;
 float low_pressure = 98000;
 float disco_dP = 500;
-int current_state = 3; // 1 = Inspiration; 2 = Expiration; 3 = Stopped;
+int current_state = INSPIRATION; // 1 = Inspiration; 2 = Expiration; 3 = Stopped;
 float FiO2 = 20;
 float density = 1.225; // [kg/m^3]
+
 
 int timer_init = 0;
 int timer_current = 0;
 int timer_prev = 0;
 
-float frequency = 60; // [hz]
+float frequency = 0.2; // [hz]
 float period = 1/frequency * 1000; // [ms]
 
-Pressure_gauge venturi_sensor(psensor1, psensor1);
-Pressure_gauge pressure_sensor2(psensor2, psensor2);
-Pressure_gauge pressure_sensor3(psensor3, psensor3);
+Pressure_gauge venturi_sensor(psensor1);
+Pressure_gauge pressure_sensor2(psensor2);
+Pressure_gauge pressure_sensor3(psensor3);
 
 // *** Shared functions *** // 
 // Module
@@ -103,7 +102,8 @@ void band1_0() {
   check_disconnect(); 
   check_HP();
   check_LP();
-  //bme280_getdata();
+  pressure_sensor_read2();
+  bme280_getdata();
   //venturi_measure();
 }
 // Mid priority functions part 1
@@ -112,8 +112,9 @@ void band2_0() {
 }
 // Mid priority functions part 2
 void band2_1() {
-  FiO2_sense();
-  check_FiO2();
+  //FiO2_sense();
+  //check_FiO2();
+  valve_control();
 }
 // Low priority functions part 1
 void band3_0() {
@@ -135,12 +136,12 @@ void setup() {
   Serial.begin(SERIAL_BAUD);
   while(!Serial) {} // Wait
   Wire.begin();
-
   // Setting up the individual functionalities
   bme280_setup();
   pinMode(buzzer_pin, OUTPUT); // Set buzzer
-  venturi_setup(venturi_sensor);
-
+  //venturi_sensor.calibrate();
+  pressure_sensor2.calibrate();
+  valve_setup();
   // Initialisation Timer
   timer_init = millis();
 }
@@ -343,50 +344,6 @@ void FiO2_sense(){
   FiO2_raw[mod(FiO2_index,3)] = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
   FiO2 = mean_float(&FiO2_raw[0],3);
   FiO2_index +=1;
-  Serial.println(FiO2);
-}
-
-// * Venturi Flowmeter * //
-// Variables //
-float venturi_speed = 0;
-float venturi_pressure = 0;
-float venturi_flow = 0;
-float venturi_small_radi = 0.00635; 
-float venturi_normal_radi = 0.0127;
-
-float venturi_volume = 0;
-float venturi_volume_prev = 0;
-float venturi_time = 0;
-float venturi_time_prev = 0;
-int venturi_prev_state =0;
-
-float venturi_small_section = pi*pow(venturi_small_radi,2); 
-float venturi_normal_section = pi*pow(venturi_normal_radi,2); 
-
-// Setup // 
-void venturi_setup(Pressure_gauge variable){
-  venturi_sensor = variable;
-}
-// Calculate // 
-void venturi_measure(){
-  venturi_sensor.send();
-  venturi_pressure = venturi_sensor.read();
-  venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
-  venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
-  Serial.print("venturi: ");
-  Serial.println(venturi_pressure);
- }
-void venturi_TidalVolume(){
-  venturi_time = millis();
-  if (current_state == INSPIRATION){
-    venturi_volume = venturi_volume + venturi_flow*(venturi_time-venturi_time_prev)/1000;
-  }
-  else if (current_state != venturi_prev_state){
-    venturi_volume = venturi_volume_prev;
-    venturi_volume=0;
-  }
-  current_state = venturi_prev_state;
-  venturi_time_prev = venturi_time;
 }
 
 // * Controlling the actuated valve * //
@@ -437,6 +394,55 @@ void bme280_setup(){
 }
 void bme280_getdata(){
    bme.read(bme_pressure, bme_temperature, bme_humidity, tempUnit, presUnit);
-   Serial.print("BME: "); // to test I2C
-   Serial.println(bme_pressure);
 }
+
+// * Pressure sensors * //
+// Variables //
+// Function //
+void pressure_sensor_read2(){
+    pressure_sensor2.send();
+    pressure_sensor2.read();
+    pressure2 = pressure_sensor2.get_pressure();
+}
+
+/*
+// * Venturi Flowmeter * //
+// Variables //
+float venturi_speed = 0;
+float venturi_pressure = 0;
+float venturi_flow = 0;
+float venturi_small_radi = 0.00635; 
+float venturi_normal_radi = 0.0127;
+
+float venturi_volume = 0;
+float venturi_volume_prev = 0;
+float venturi_time = 0;
+float venturi_time_prev = 0;
+int venturi_prev_state =0;
+
+float venturi_small_section = pi*pow(venturi_small_radi,2); 
+float venturi_normal_section = pi*pow(venturi_normal_radi,2); 
+
+// Setup // 
+// Calculate // 
+void venturi_measure(){
+  venturi_sensor.send();
+  venturi_pressure = venturi_sensor.read();
+  venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
+  venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
+  Serial.print("venturi: ");
+  Serial.println(venturi_pressure);
+ }
+void venturi_TidalVolume(){
+  venturi_time = millis();
+  if (current_state == INSPIRATION){
+    venturi_volume = venturi_volume + venturi_flow*(venturi_time-venturi_time_prev)/1000;
+  }
+  else if (current_state != venturi_prev_state){
+    venturi_volume = venturi_volume_prev;
+    venturi_volume=0;
+  }
+  current_state = venturi_prev_state;
+  venturi_time_prev = venturi_time;
+}
+*/

@@ -14,7 +14,7 @@
 class Pressure_gauge
 {
       public:
-        Pressure_gauge(int addr, int pin);
+        Pressure_gauge(int addr);
         virtual ~Pressure_gauge();
         void init();
         float calibrate();
@@ -24,7 +24,6 @@ class Pressure_gauge
         void set_offset_pressure(int offset);
 
         int address;
-        int pressure_pin;
         float pressure;
         float temperature;
         float offset_pressure;
