@@ -9,9 +9,41 @@
 class Lcd_menu
 {
     public:
+        //Constructeur, initilise beaucoup de variables
         Lcd_menu();
         virtual ~Lcd_menu();
 
+        //À rouler à tous les 20-100ms
+        void lcd_run();
+        
+        //Commande pour savoir si le système doit être à on ou off
+        bool get_on_off();
+
+        //Informer le lcd d'une alarme et de l'état de la machine (inspi, expi) 
+        void startAlarm(int alarm_nb);
+        void stopAlarm();
+        void setStateMachine(int state);
+
+        //Récupérer les variables de controles
+        int get_TidalVolume_cmd();
+        int get_MaxPressure_cmd();
+        int get_RespiratoryRate_cmd();
+        int get_IERatio_cmd();
+
+        //Mettre les valeurs par défauts des variables de controles
+        void  set_TidalVolume_cmd(int volume);
+        void  set_MaxPressure_cmd(int pressure);
+        void  set_RespiratoryRate_cmd(int rate);
+        void  set_IERatio_cmd(int ratio); 
+
+        //Informer le lcd sur les informations à afficher
+        void set_TidalVolume_reading(int volume);
+        void set_Pressure(int pressure);
+        void set_Fio2(int fio2);
+
+    protected:
+
+    private:
         //LCD 
         LiquidCrystal lcd;
 
@@ -20,13 +52,13 @@ class Lcd_menu
         int lcd_key;
         int adc_key_in;
         
-        //Machine a état
-        void lcd_run();
+        //State machine
+
         int state; 
         void state_display(); 
         void state_config(); 
 
-        //Variables
+        //Value and readings
         int tidalVolume_reading; 
         int out_pc; 
         int out_fio2;
@@ -36,39 +68,15 @@ class Lcd_menu
         int respiratoryRate_cmd;
         bool on_off;
 
-        //Alarm 
-        void startAlarm(int alarm_nb);
-        void stopAlarm();
+        void  set_cmd_value(int cmd, int value);
+        
+        //Alarm and mode
         String alarm_name[10]={""};
         int alarm = 0;
         
-        
-        void setMode(int mode);
-        String mode_name[10]={""};
+        String state_machine_name[10]={""};
         int state_machine = 0;
-        
-        /************************GET / SET ******************************/
-        //CONFIG
-        int get_TidalVolume_cmd();
-        int get_MaxPressure();
-        int get_RespiratoryRate();
-        int get_IERatio();
-
-        void  set_TidalVolume_cmd(int volume);
-        void  set_MaxPressure_cmd(int pressure);
-        void  set_RespiratoryRate_cmd(int rate);
-        void  set_IERatio_cmd(int ratio); 
-        void  set_cmd_value(int cmd, int value);
-
-        //DISPLAY
-        void set_TidalVolume_reading(int volume);
-        void set_Pressure(int pressure);
-        void set_Fio2(int fio2);
-
-        //OTHERS
-        bool get_on_off();
-       
-
+            
         //display
         //First value is top/down and the second one is which position, so 1 per position
         int display_cursor_pos[2][2];
@@ -91,9 +99,7 @@ class Lcd_menu
         
         //Config
 
-    protected:
 
-    private:
    
 
     

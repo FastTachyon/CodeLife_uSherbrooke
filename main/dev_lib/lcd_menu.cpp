@@ -80,9 +80,9 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   alarm_name[4] = "!Low O   ";
   alarm = 0;
 
-  mode_name[1] =  "Inspi    ";
-  mode_name[2] =  "Expi     ";
-  mode_name[3] =  "Stop     ";
+  state_machine_name[1] =  "Inspi    ";
+  state_machine_name[2] =  "Expi     ";
+  state_machine_name[3] =  "Stop     ";
   state_machine=1;
   
   
@@ -117,7 +117,7 @@ void Lcd_menu::stopAlarm()
 {
   alarm=0;
 }
-void Lcd_menu::setMode(int mode)
+void Lcd_menu::setStateMachine(int state)
 {
   
 }
@@ -238,7 +238,7 @@ void Lcd_menu::state_display() //State 1
   //Refresh the display
   lcd.setCursor(0, 0);
   if (alarm==0){
-    lcd.print(mode_name[state_machine]);}
+    lcd.print(state_machine_name[state_machine]);}
   else{
     lcd.print(alarm_name[alarm]);}
   
@@ -330,15 +330,15 @@ int Lcd_menu::get_TidalVolume_cmd()
 {
     return config_value[TidalVolume];
 }
-int Lcd_menu::get_MaxPressure()
+int Lcd_menu::get_MaxPressure_cmd()
 {
     return config_value[MaxPressure];
 }
-int Lcd_menu::get_RespiratoryRate()
+int Lcd_menu::get_RespiratoryRate_cmd()
 {
     return config_value[RespiratoryRate];
 }
-int Lcd_menu::get_IERatio()
+int Lcd_menu::get_IERatio_cmd()
 {
   return config_value[IERatio];
 }
