@@ -26,20 +26,23 @@ class Lcd_menu
 
         //Récupérer les variables de controles
         int get_TidalVolume_cmd();
-        int get_MaxPressure_cmd();
+        int get_InspiPressure_cmd();
         int get_RespiratoryRate_cmd();
         int get_IERatio_cmd();
+        int get_FiO2Target_cmd();
 
         //Mettre les valeurs par défauts des variables de controles
         void  set_TidalVolume_cmd(int volume);
-        void  set_MaxPressure_cmd(int pressure);
+        void  set_InspiPressure_cmd(int pressure);
         void  set_RespiratoryRate_cmd(int rate);
         void  set_IERatio_cmd(int ratio); 
+        void  set_FiO2Target_cmd(int target);
 
         //Informer le lcd sur les informations à afficher
         void set_TidalVolume_reading(int volume);
-        void set_Pressure(int pressure);
-        void set_Fio2(int fio2);
+        void set_Inspi_pressure(int inspi_p);
+        void set_Peep_pressure(int inspi_p);
+        void set_FiO2(int fio2);
 
     protected:
 
@@ -60,7 +63,8 @@ class Lcd_menu
 
         //Value and readings
         int tidalVolume_reading; 
-        int out_pc; 
+        int out_inspi_pressure; 
+        int out_peep_pressure;
         int out_fio2;
       
         int tidalVolume_cmd;
@@ -84,11 +88,11 @@ class Lcd_menu
         int display_cursor_state;
 
         //config
-        int config_cursor_pos[2][5];
+        int config_cursor_pos[2][6];
         int config_cursor_pos_size;
         int config_cursor_state;
         int config_list;
-        int config_value[4];
+        int config_value[5];
 
         void config_parser(int index);
 
