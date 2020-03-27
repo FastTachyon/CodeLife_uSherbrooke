@@ -73,7 +73,19 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
 
 
   //Alarm
-  alarm_name[0]=
+  alarm_name[0] = "NoAlarm  ";
+  alarm_name[1] = "!Low P   ";
+  alarm_name[2] = "!Hig P   ";
+  alarm_name[3] = "!Dis P   ";
+  alarm_name[4] = "!Low O   ";
+  alarm = 0;
+
+  mode_name[1] =  "Inspi    ";
+  mode_name[2] =  "Expi     ";
+  mode_name[3] =  "Stop     ";
+  state_machine=1;
+  
+  
 }
 
 Lcd_menu::~Lcd_menu()
@@ -225,7 +237,11 @@ void Lcd_menu::state_display() //State 1
 
   //Refresh the display
   lcd.setCursor(0, 0);
-  lcd.print("Mode     ");
+  if (alarm==0){
+    lcd.print(mode_name[state_machine]);}
+  else{
+    lcd.print(alarm_name[alarm]);}
+  
   lcd.print("Set");
   lcd.print(" ");
   lcd.print("Off");

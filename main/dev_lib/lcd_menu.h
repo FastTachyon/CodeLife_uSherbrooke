@@ -39,10 +39,13 @@ class Lcd_menu
         //Alarm 
         void startAlarm(int alarm_nb);
         void stopAlarm();
+        String alarm_name[10]={""};
         int alarm = 0;
         
+        
         void setMode(int mode);
-        int mode = 0;
+        String mode_name[10]={""};
+        int state_machine = 0;
         
         /************************GET / SET ******************************/
         //CONFIG
