@@ -7,7 +7,7 @@
 #define btnSELECT 4
 #define btnNONE   5
 
-#define MaxPressure 0
+#define InspiPressure 0
 #define TidalVolume 1
 #define RespiratoryRate 2
 #define IERatio 3
@@ -35,7 +35,8 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
 
   //variables
     tidalVolume_reading = 0; 
-    out_pc = 0; 
+    out_inspi_pressure = 0; 
+    out_peep_pressure = 0; 
     out_fio2 = 0;
     tidalVolume_cmd = 0; 
     maxPressure_cmd = 0;
@@ -69,7 +70,7 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   config_cursor_state = 0;
   config_value[TidalVolume]=40;
   config_value[RespiratoryRate]=10;
-  config_value[MaxPressure]=20;
+  config_value[InspiPressure]=20;
   config_value[IERatio]=20;
   config_value[FiO2Target]=21;
   config_list=0;
@@ -195,7 +196,7 @@ void Lcd_menu::config_parser(int index)
     case 1:
       lcd.setCursor(0, 1);
       lcd.print("Inspi P. (cm) ");
-      lcd.print(intToChar(config_value[MaxPressure],2)); 
+      lcd.print(intToChar(config_value[InspiPressure],2)); 
       return;
     case 2: 
       lcd.setCursor(0, 1);
@@ -246,15 +247,14 @@ void Lcd_menu::state_display() //State 1
   lcd.print(" ");
   lcd.print("Off");
   lcd.setCursor(0, 1);
-  lcd.print("V:");
   lcd.print(intToChar(tidalVolume_reading*10,3));
-  lcd.print(" ");
-  lcd.print("P:");
-  lcd.print(intToChar(out_pc,2));
-  lcd.print(" ");
-  lcd.print("O2:");
+  lcd.print("  ");
+  lcd.print(intToChar(out_inspi_pressure,2));
+  lcd.print("   ");
+  lcd.print(intToChar(out_peep_pressure,2));
+  lcd.print("  ");
   lcd.print(intToChar(out_fio2,2));
-  lcd.print(" ");
+ 
   
 
   //Set the cursor according to the state of the cursor
@@ -330,9 +330,9 @@ int Lcd_menu::get_TidalVolume_cmd()
 {
     return config_value[TidalVolume];
 }
-int Lcd_menu::get_MaxPressure_cmd()
+int Lcd_menu::get_InspiPressure_cmd()
 {
-    return config_value[MaxPressure];
+    return config_value[InspiPressure];
 }
 int Lcd_menu::get_RespiratoryRate_cmd()
 {
@@ -342,7 +342,7 @@ int Lcd_menu::get_IERatio_cmd()
 {
   return config_value[IERatio];
 }
-int Lcd_menu::get_Fi02Target_cmd()
+int Lcd_menu::get_FiO2Target_cmd()
 {
   return  config_value[FiO2Target];
 }
@@ -352,8 +352,8 @@ void  Lcd_menu::set_cmd_value(int cmd,int value)
     case TidalVolume:
       set_TidalVolume_cmd(value);
       return;
-    case MaxPressure:
-      set_MaxPressure_cmd(value);
+    case InspiPressure:
+      set_InspiPressure_cmd(value);
       return;
     case RespiratoryRate:
       set_RespiratoryRate_cmd(value);
@@ -370,9 +370,9 @@ void  Lcd_menu::set_TidalVolume_cmd(int volume)
 { 
     config_value[TidalVolume] = minMax(volume, 0, 99);
 }
-void  Lcd_menu::set_MaxPressure_cmd(int pressure)
+void  Lcd_menu::set_InspiPressure_cmd(int pressure)
 {
-    config_value[MaxPressure] = minMax(pressure,10,40);
+    config_value[InspiPressure] = minMax(pressure,10,40);
 }
 void  Lcd_menu::set_RespiratoryRate_cmd(int rate)
 {
@@ -391,13 +391,17 @@ void Lcd_menu::set_TidalVolume_reading(int volume)
 {
     tidalVolume_reading= volume; 
 }
-void Lcd_menu::set_Pressure(int pressure)
+void Lcd_menu::set_Inspi_pressure(int pressure)
 {
-    out_pc = pressure;
+    out_inspi_pressure = pressure;
 }
-void Lcd_menu::set_Fio2(int fio2)
+void Lcd_menu::set_Peep_pressure(int pressure)
 {
-  out_fio2 = fio2;
+    out_peep_pressure = pressure;
+}
+void Lcd_menu::set_FiO2(int fio2)
+{
+    out_fio2 = fio2;
 }
 
 /*************************************OTHERS***************************************/
