@@ -1,5 +1,6 @@
 #include "Wire.h"
 #include "pressure.h"
+#include <BME280I2C.h>
 
 #define NB_MA_PRESSURE 3
 #define pi 3.1415926
@@ -21,10 +22,11 @@
 // * Physical pins needed * //
 #define buzzer_pin 9
 #define FiO2_pin A1
-#define valve_digital 22
-
+#define valve_pin 22
+#define limitswitch_pin 26
 
 // * I2C BUS * //
+#define SERIAL_BAUD 9600
 #define psensor1 0x28
 
 // *** Doctor variables *** //
@@ -61,6 +63,8 @@ int timer_prev = 0;
 float frequency = 60;
 float period = 1/frequency * 1000;
 
+Pressure_gauge venturi_sensor(psensor1);
+
 // *** Shared functions *** // 
 // Module
 int mod(int a, int b) {
@@ -88,11 +92,12 @@ int mean_int(int *arr, int SizeOfArray ){
 
 // High priority functions
 void band1_0() {
-  state_machine();
-  check_disconnect();
+  state_machine(); // Cycle and time management
+  check_disconnect(); 
   check_HP();
   check_LP();
-  FiO2_sense();
+  bme280_getdata();
+  venturi_measure();
 }
 // Mid priority functions part 1
 void band2_0() {
@@ -100,6 +105,7 @@ void band2_0() {
 }
 // Mid priority functions part 2
 void band2_1() {
+  FiO2_sense();
   check_FiO2();
 }
 // Low priority functions part 1
@@ -118,7 +124,17 @@ void band3_3() {
 // *** Setup and loop *** //
 
 void setup() {
+  // STarting serial communication
+  Serial.begin(SERIAL_BAUD);
+  while(!Serial) {} // Wait
+  Wire.begin();
+
+  // Setting up the individual functionalities
+  bme280_setup();
   pinMode(buzzer_pin, OUTPUT); // Set buzzer
+  venturi_setup(venturi_sensor);
+
+  // Initialisation Timer
   timer_init = millis();
 }
 
@@ -335,7 +351,6 @@ float venturi_volume_prev = 0;
 float venturi_time = 0;
 float venturi_time_prev = 0;
 int venturi_prev_state =0;
-Pressure_gauge venturi_sensor(psensor1);
 
 float venturi_small_section = pi*pow(venturi_small_radi,2); 
 float venturi_normal_section = pi*pow(venturi_normal_radi,2); 
@@ -350,6 +365,8 @@ void venturi_measure(){
   venturi_pressure = venturi_sensor.read();
   venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
   venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
+  Serial.print("venturi: ");
+  Serial.println(venturi_pressure);
  }
 void venturi_TidalVolume(){
   venturi_time = millis();
@@ -366,22 +383,52 @@ void venturi_TidalVolume(){
 
 // * Controlling the actuated valve * //
 // Variables //
-
+// No local variables needed
 // 
 void valve_setup(){
-pinMode(valve_digital,OUTPUT);
+pinMode(valve_pin,OUTPUT);
 }
 
 void valve_control(){
   if (current_state == INSPIRATION ){
-    digitalWrite(valve_digital,HIGH);
+    digitalWrite(valve_pin,HIGH);
   }
   else{
-    digitalWrite(valve_digital,LOW);
+    digitalWrite(valve_pin,LOW);
   }
 }
 
 // * Read Pressure sensor BME* //
 // Variables //
-
+BME280I2C bme;
+float bme_pressure;
+float bme_humidity;
+float bme_temperature;
+BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+BME280::PresUnit presUnit(BME280::PresUnit_Pa);
 // Functions //
+void bme280_setup(){
+  while(!bme.begin())
+  {
+    Serial.println("Could not find BME280 sensor!");
+    delay(1000);
+  }
+
+  // bme.chipID(); // Deprecated. See chipModel().
+  switch(bme.chipModel())
+  {
+     case BME280::ChipModel_BME280:
+       Serial.println("Found BME280 sensor! Success.");
+       break;
+     case BME280::ChipModel_BMP280:
+       Serial.println("Found BMP280 sensor! No Humidity available.");
+       break;
+     default:
+       Serial.println("Found UNKNOWN sensor! Error!");
+  }
+}
+void bme280_getdata(){
+   bme.read(bme_pressure, bme_temperature, bme_humidity, tempUnit, presUnit);
+   Serial.print("BME: "); // to test I2C
+   Serial.println(bme_pressure);
+}
