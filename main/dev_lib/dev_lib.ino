@@ -21,7 +21,7 @@ void loop() {
   lcd_menu.set_Fio2(lcd_menu.get_RespiratoryRate_cmd()+lcd_menu.get_IERatio_cmd());
 
   lcd_menu.startAlarm(0);
-  Serial.print(lcd_menu.get_on_off());
+  //Serial.print(lcd_menu.get_on_off());
 
   delay(50);
 }
