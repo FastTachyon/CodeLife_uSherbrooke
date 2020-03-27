@@ -1,5 +1,5 @@
 #define NB_MA_PRESSURE 3
-#define pi 3.1418
+#define pi 3.1415926
 // * Different states of the machine * //
 // Associated variable: current_state
 #define INSPIRATION 1
@@ -61,7 +61,7 @@ int mod(int a, int b) {
   // Inline if (cond) ? si vrai : si faux
   return (c < 0) ? c + b : c;}
 
-// For mean avergae uses
+// For mean average uses
 float mean_float(float *arr, int SizeOfArray ){
   int test =0;
   for (int i=0; i<SizeOfArray;i++){
@@ -76,6 +76,11 @@ int mean_int(int *arr, int SizeOfArray ){
   }
   return test;
 }
+// Time integration
+void integrate(float integrate_TidalVolume, float integrate_rate){
+        integrate_TidalVolume = integrate_TidalVolume + 
+  return
+  }
 
 // *** Bands *** //
 
@@ -319,22 +324,43 @@ void FiO2_sense(){
 // Variables //
 float venturi_speed = 0;
 float venturi_pressure = 0;
+float venturi_flow = 0;
 float venturi_small_radi = 0.00635; 
 float venturi_normal_radi = 0.0127;
-int venturi_sensor;
 
-float venturi_small_section = 3.1418*pow(venturi_small_radi,2); 
-float venturi_normal_section = 3.1418*pow(venturi_normal_radi,2); 
+float venturi_volume = 0;
+float venturi_volume_prev = 0;
+float venturi_time = 0;
+float venturi_time_prev = 0;
+int venturi_prev_state =0;
+Pressure_Gauge venturi_sensor;
 
-void venturi_setup(int adress){
-  venturi_sensor = adress;
+float venturi_small_section = pi*pow(venturi_small_radi,2); 
+float venturi_normal_section = pi*pow(venturi_normal_radi,2); 
+
+// Setup // 
+void venturi_setup(Pressure_gauge variable){
+  venturi_sensor = variable;
 }
-
+// Calculate // 
 void venturi_measure(){
-  //venturi  pressure = read
+  pressure_gauge.send();
+  venturi_pressure = pressure_gauge.read();
   venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
+  venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
+ }
+void venturi_volume(){
+  venturi_time = millis();
+  if (current_state == INSPIRATION){
+    venturi_volume = venturi_volume + venturi_flow*(venturi_time-venturi_time_prev)/1000;
   }
-
+  else if (current_state != venturi_prev_state){
+    venturi_volume = venturi_volume_prev;
+    venturi_volume=0;
+  }
+  current_state = venturi_prev_state;
+  venturi_time_prev = venturi_time;
+}
 // * Read Pressure sensor * //
 // Variables //
 

@@ -78,7 +78,7 @@ int Pressure_gauge::read()
   
   
             pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
-            pressure = pressure - 0.4-offset_pressure;  
+            pressure = pressure - offset_pressure;  
             temperature = (temperature_data * 0.0977) - 50;
   
         return status1; 
