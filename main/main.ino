@@ -60,8 +60,8 @@ int timer_init = 0;
 int timer_current = 0;
 int timer_prev = 0;
 
-float frequency = 60;
-float period = 1/frequency * 1000;
+float frequency = 60; // [hz]
+float period = 1/frequency * 1000; // [ms]
 
 Pressure_gauge venturi_sensor(psensor1);
 
@@ -96,8 +96,8 @@ void band1_0() {
   check_disconnect(); 
   check_HP();
   check_LP();
-  bme280_getdata();
-  venturi_measure();
+  //bme280_getdata();
+  //venturi_measure();
 }
 // Mid priority functions part 1
 void band2_0() {
@@ -130,9 +130,9 @@ void setup() {
   Wire.begin();
 
   // Setting up the individual functionalities
-  bme280_setup();
+  //bme280_setup();
   pinMode(buzzer_pin, OUTPUT); // Set buzzer
-  venturi_setup(venturi_sensor);
+  //venturi_setup(venturi_sensor);
 
   // Initialisation Timer
   timer_init = millis();
@@ -318,7 +318,7 @@ void sound(){
 // Variables //
 float FiO2_raw[3] = {20,20,20}; // Initialize at atmospehre % to evade alarms
 int FiO2_index = 0;
-float FiO2_percent[2] = {0.2,  0.4} ;
+float FiO2_percent[2] = {126,  300} ;
 float FiO2_cal_array[2] ={126, 300}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
 float FiO2_slope = 0;
 float FiO2_const = 0;
@@ -336,6 +336,7 @@ void FiO2_sense(){
   FiO2_raw[mod(FiO2_index,3)] = analogRead(FiO2_pin)*FiO2_slope + FiO2_const;
   FiO2 = mean_float(&FiO2_raw[0],3);
   FiO2_index +=1;
+  Serial.println(FiO2);
 }
 
 // * Venturi Flowmeter * //
