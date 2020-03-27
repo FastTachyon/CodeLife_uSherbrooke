@@ -1,3 +1,6 @@
+#include "Wire.h"
+#include "pressure.h"
+
 #define NB_MA_PRESSURE 3
 #define pi 3.1415926
 // * Different states of the machine * //
@@ -18,7 +21,11 @@
 // * Physical pins needed * //
 #define buzzer_pin 9
 #define FiO2_pin A1
+#define valve_digital 22
 
+
+// * I2C BUS * //
+#define psensor1 0x28
 
 // *** Doctor variables *** //
 int resp_per_minute;
@@ -76,11 +83,6 @@ int mean_int(int *arr, int SizeOfArray ){
   }
   return test;
 }
-// Time integration
-void integrate(float integrate_TidalVolume, float integrate_rate){
-        integrate_TidalVolume = integrate_TidalVolume + 
-  return
-  }
 
 // *** Bands *** //
 
@@ -320,7 +322,7 @@ void FiO2_sense(){
   FiO2_index +=1;
 }
 
-// * Venturi Calculation * //
+// * Venturi Flowmeter * //
 // Variables //
 float venturi_speed = 0;
 float venturi_pressure = 0;
@@ -333,7 +335,7 @@ float venturi_volume_prev = 0;
 float venturi_time = 0;
 float venturi_time_prev = 0;
 int venturi_prev_state =0;
-Pressure_Gauge venturi_sensor;
+Pressure_gauge venturi_sensor(psensor1);
 
 float venturi_small_section = pi*pow(venturi_small_radi,2); 
 float venturi_normal_section = pi*pow(venturi_normal_radi,2); 
@@ -344,12 +346,12 @@ void venturi_setup(Pressure_gauge variable){
 }
 // Calculate // 
 void venturi_measure(){
-  pressure_gauge.send();
-  venturi_pressure = pressure_gauge.read();
+  venturi_sensor.send();
+  venturi_pressure = venturi_sensor.read();
   venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
   venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
  }
-void venturi_volume(){
+void venturi_TidalVolume(){
   venturi_time = millis();
   if (current_state == INSPIRATION){
     venturi_volume = venturi_volume + venturi_flow*(venturi_time-venturi_time_prev)/1000;
@@ -361,6 +363,24 @@ void venturi_volume(){
   current_state = venturi_prev_state;
   venturi_time_prev = venturi_time;
 }
+
+// * Controlling the actuated valve * //
+// Variables //
+
+// 
+void valve_setup(){
+pinMode(valve_digital,OUTPUT);
+}
+
+void valve_control(){
+  if (current_state == INSPIRATION ){
+    digitalWrite(valve_digital,HIGH);
+  }
+  else{
+    digitalWrite(valve_digital,LOW);
+  }
+}
+
 // * Read Pressure sensor BME* //
 // Variables //
 
