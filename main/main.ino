@@ -25,7 +25,7 @@
 
 
 // * Physical pins needed * //
-#define buzzer_pin 9
+#define buzzer_pin 2
 #define FiO2_pin A6
 #define valve_pin 22
 #define limitswitch_pin 26
@@ -51,7 +51,7 @@ float time_expi = (1-ie_ratio) / freq_cycle;
 float atm = 100000;
 
 // *** Variables *** //
-int alarm;
+int alarm = 4;
 int index; 
 int sound_freq[2] = {0,0} ;
 
@@ -106,8 +106,8 @@ int mean_int(int *arr, int SizeOfArray ){
 // High priority functions
 void band1_0() {
   state_machine(); // Cycle and time management
-  FiO2_sense();
-  check_FiO2();
+  //FiO2_sense();
+  //check_FiO2();
   //check_disconnect(); 
   //check_HP();
   //check_LP();
