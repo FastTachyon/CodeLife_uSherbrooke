@@ -22,7 +22,7 @@ void loop() {
   lcd_menu.set_FiO2(lcd_menu.get_RespiratoryRate_cmd()+lcd_menu.get_IERatio_cmd());
   lcd_menu.set_Peep_pressure(lcd_menu.get_FiO2Target_cmd());
 
-  lcd_menu.startAlarm(0);
+  lcd_menu.startAlarm(4);
   //Serial.print(lcd_menu.get_on_off());
 
   delay(50);

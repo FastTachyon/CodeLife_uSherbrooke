@@ -38,17 +38,15 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
     out_inspi_pressure = 0; 
     out_peep_pressure = 0; 
     out_fio2 = 0;
-    tidalVolume_cmd = 0; 
-    maxPressure_cmd = 0;
-    respiratoryRate_cmd = 0;
+
     on_off = false;
 
 
   //display 
   display_cursor_pos[0][0] = 9; // The conf option 
-  display_cursor_pos[1][0] = 0; 
+  display_cursor_pos[1][0] = 1; 
   display_cursor_pos[0][1] = 13; // the off option
-  display_cursor_pos[1][1] = 0;  
+  display_cursor_pos[1][1] = 1;  
   display_cursor_state = 0;
   display_cursor_pos_size = sizeof(display_cursor_pos[0])/2; 
 
@@ -75,7 +73,19 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   config_value[FiO2Target]=21;
   config_list=0;
 
-
+  //Security
+  security_cursor_pos[0][0]=6;
+  security_cursor_pos[1][0]=1;
+  security_cursor_pos[0][1]=7;
+  security_cursor_pos[1][1]=1;
+  security_cursor_pos[0][2]=8;
+  security_cursor_pos[1][2]=1;
+  security_cursor_pos[0][3]=9;
+  security_cursor_pos[1][3]=1;
+  security_cursor_pos[0][4]=12;
+  security_cursor_pos[1][4]=1;
+  security_cursor_pos_size= sizeof(security_cursor_pos[0])/2; 
+  
   //Alarm
   alarm_name[0] = "NoAlarm  ";
   alarm_name[1] = "!Low P   ";
@@ -103,12 +113,19 @@ void Lcd_menu::lcd_run()
   switch(state)
   {
     case 0:
-      
       state_config();
+      reset_passcode_try();
       return;
     case 1:
       state_display();
+      reset_passcode_try();
       return;
+    case 11:
+    case 12:
+    case 13:
+      state_security();
+      return;
+     
       
   }
 }
@@ -123,7 +140,7 @@ void Lcd_menu::stopAlarm()
 }
 void Lcd_menu::setStateMachine(int state)
 {
-  
+  state_machine = state;
 }
 /**********************************************************************
    _____ __        __          ______            _____      
@@ -181,8 +198,8 @@ void Lcd_menu::state_config() //State 1
         set_cmd_value(config_cursor_state-1,min0max100(config_value[config_cursor_state-1]-1));}}
         
    if (button == btnSELECT &&config_cursor_state == 0){
-    on_off = true;
-    state = 1;
+    //on_off = true;
+    state = 11;
    }
 }
 
@@ -195,7 +212,7 @@ void Lcd_menu::config_parser(int index)
     case 0: 
     case 1:
       lcd.setCursor(0, 1);
-      lcd.print("Inspi P. (cm) ");
+      lcd.print("PI Max (cm)   ");
       lcd.print(intToChar(config_value[InspiPressure],2)); 
       return;
     case 2: 
@@ -237,7 +254,7 @@ void Lcd_menu::state_display() //State 1
 {
 
   //Refresh the display
-  lcd.setCursor(0, 0);
+  lcd.setCursor(0, 1);
   if (alarm==0){
     lcd.print(state_machine_name[state_machine]);}
   else{
@@ -246,7 +263,7 @@ void Lcd_menu::state_display() //State 1
   lcd.print("Set");
   lcd.print(" ");
   lcd.print("Off");
-  lcd.setCursor(0, 1);
+  lcd.setCursor(0, 0);
   lcd.print(intToChar(tidalVolume_reading*10,3));
   lcd.print("  ");
   lcd.print(intToChar(out_inspi_pressure,2));
@@ -282,17 +299,126 @@ void Lcd_menu::state_display() //State 1
    {
       if (display_cursor_state == 0) 
       {
-        state = 0;
+        state = 12;
       }
       else if (display_cursor_state == 1)
       {
-        state = 0;
-        on_off=false;
+        state = 13;
+        //on_off=false;
       }
    }
 
 }
+/**************************************************************************************
+ * _____ __        __          _____                      _ __       
+  / ___// /_____ _/ /____     / ___/___  _______  _______(_) /___  __
+  \__ \/ __/ __ `/ __/ _ \    \__ \/ _ \/ ___/ / / / ___/ / __/ / / /
+ ___/ / /_/ /_/ / /_/  __/   ___/ /  __/ /__/ /_/ / /  / / /_/ /_/ / 
+/____/\__/\__,_/\__/\___/   /____/\___/\___/\__,_/_/  /_/\__/\__, /  
+                                                            /____/                                    
+ **************************************************************************************/
 
+ void Lcd_menu::state_security()
+ {
+  lcd.setCursor(0, 0);
+  lcd.print(" Enter Passcode ");
+  lcd.setCursor(0, 1);
+  lcd.print("      ");
+  lcd.print(passcode_try[0]);
+  lcd.print(passcode_try[1]);
+  lcd.print(passcode_try[2]);
+  lcd.print(passcode_try[3]);
+  lcd.print("  Quit");
+
+  int cursor_x = security_cursor_pos[0][security_cursor_state];
+  int cursor_y = security_cursor_pos[1][security_cursor_state];
+  lcd.setCursor(cursor_x,cursor_y);
+  lcd.cursor();
+
+    //Button logic
+  int button = read_LCD_buttons();
+  
+   if (button == btnRIGHT){
+      if (security_cursor_state == security_cursor_pos_size-1){
+        security_cursor_state = 0;}
+      else {
+        security_cursor_state++;}
+   }
+   if (button == btnLEFT){
+      if (security_cursor_state == 0){
+        security_cursor_state = security_cursor_pos_size-1 ;}
+      else {
+        security_cursor_state = security_cursor_state-1;}}
+
+   if (security_cursor_state != 4) 
+   {
+     if ((button == btnUP) && (passcode_try[security_cursor_state] != 9))
+     {
+        passcode_try[security_cursor_state] = (passcode_try[security_cursor_state]+1);
+     }
+  
+     if ((button == btnDOWN) && (passcode_try[security_cursor_state] != 0))
+     {
+        passcode_try[security_cursor_state] = (passcode_try[security_cursor_state]-1)%10;
+     }
+  
+     if (button == btnSELECT)
+     {
+        for(int i=0; i<4; i++)
+        {
+          if (passcode[i] != passcode_try[i])
+          {
+            return;
+          }
+         
+         }
+         if (state == 11)
+          {
+            state = 1;
+            on_off=true; 
+          }
+          else if (state ==12)
+          {
+            state =0;
+          }
+          else if (state ==13)
+          {
+            state =0;
+            on_off=false;
+          }
+      }
+    }
+    else 
+    {
+      if(button ==btnSELECT)
+      {
+        if (state == 11)
+        {
+          state = 0;
+        }
+        if (state == 12 or state == 13)
+        {
+          state =1;
+        }
+      }
+    }
+    return;
+ }
+ void Lcd_menu::reset_passcode_try()
+ {
+    for(int i=0; i<4;i++)
+    {
+      passcode_try[i] =0;
+    }
+ }
+
+ void Lcd_menu::set_passcode(int unit_0, int unit_1, int unit_2, int unit_3)
+ {
+  passcode[0] = unit_0; 
+  passcode[1] = unit_1;
+  passcode[2] = unit_2;
+  passcode[3] = unit_3;
+ }
 int Lcd_menu::read_LCD_buttons()
 {
    adc_key_in = analogRead(0);      // read the value from the sensor
@@ -318,6 +444,8 @@ int Lcd_menu::read_LCD_buttons()
 
    return return_value;  // when all others fail, return this...
 }
+
+
 /*************************************************************************************/
 /* __________________      __   _____ ____________
   / ____/ ____/_  __/    _/_/  / ___// ____/_  __/
