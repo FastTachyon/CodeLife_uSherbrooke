@@ -11,6 +11,7 @@ void setup() {
   lcd_menu.set_InspiPressure_cmd(21);
   lcd_menu.set_RespiratoryRate_cmd(11);
   lcd_menu.set_IERatio_cmd(21);
+  lcd_menu.set_passcode(1,1,1,1);
  }
 
 void loop() {

@@ -411,6 +411,14 @@ void Lcd_menu::state_display() //State 1
       passcode_try[i] =0;
     }
  }
+
+ void Lcd_menu::set_passcode(int unit_0, int unit_1, int unit_2, int unit_3)
+ {
+  passcode[0] = unit_0; 
+  passcode[1] = unit_1;
+  passcode[2] = unit_2;
+  passcode[3] = unit_3;
+ }
 int Lcd_menu::read_LCD_buttons()
 {
    adc_key_in = analogRead(0);      // read the value from the sensor
