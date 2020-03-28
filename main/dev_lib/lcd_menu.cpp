@@ -51,7 +51,7 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   display_cursor_pos_size = sizeof(display_cursor_pos[0])/2; 
 
   //Config
-  config_cursor_pos[0][0] = 11;
+ /* config_cursor_pos[0][0] = 11;
   config_cursor_pos[1][0] = 0;
   config_cursor_pos[0][1] = 0;
   config_cursor_pos[1][1] = 1;
@@ -63,9 +63,16 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   config_cursor_pos[1][4] = 1;
   config_cursor_pos[0][5] = 0;
   config_cursor_pos[1][5] = 1;
-  
   config_cursor_pos_size = sizeof(config_cursor_pos[0])/2; 
-  config_cursor_state = 0;
+  config_cursor_state = 0;*/
+  
+  settings.add_element_location(11,0);
+  settings.add_element_location(0,1);
+  settings.add_element_location(0,1);
+  settings.add_element_location(0,1);
+  settings.add_element_location(0,1);
+  settings.add_element_location(0,1);
+  
   config_value[TidalVolume]=40;
   config_value[RespiratoryRate]=10;
   config_value[InspiPressure]=20;
@@ -74,7 +81,7 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   config_list=0;
 
   //Security
-  security_cursor_pos[0][0]=6;
+ /* security_cursor_pos[0][0]=6;
   security_cursor_pos[1][0]=1;
   security_cursor_pos[0][1]=7;
   security_cursor_pos[1][1]=1;
@@ -84,7 +91,14 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   security_cursor_pos[1][3]=1;
   security_cursor_pos[0][4]=12;
   security_cursor_pos[1][4]=1;
-  security_cursor_pos_size= sizeof(security_cursor_pos[0])/2; 
+  security_cursor_pos_size= sizeof(security_cursor_pos[0])/2; */
+
+  security.add_element_location(6,1);
+  security.add_element_location(7,1);
+  security.add_element_location(8,1);
+  security.add_element_location(9,1);
+  security.add_element_location(12,1);
+
   
   //Alarm
   alarm_name[0] = "NoAlarm  ";
@@ -152,7 +166,8 @@ void Lcd_menu::setStateMachine(int state)
 /**********************************************************************/                                                 
 void Lcd_menu::state_config() //State 1
 {
-  int row = min0max100(config_cursor_state-1);
+  int config_cursor = settings.get_cursor_position();
+  int row = min0max100(config_cursor-1);
 
   //Refresh the display
   lcd.setCursor(0, 0);
@@ -163,41 +178,44 @@ void Lcd_menu::state_config() //State 1
   else {
     lcd.print("Start ");}
   
-  config_parser(config_cursor_state);
+  config_parser(config_cursor);
  /* lcd.setCursor(0, 1);
   lcd.print(config_name[row]);
   lcd.print("");
   lcd.print(intToChar(config_value[row],2)); 
   */
-  int cursor_x = config_cursor_pos[0][config_cursor_state];
-  int cursor_y = config_cursor_pos[1][config_cursor_state];
+
+
+  int cursor_x = settings.get_element_location_x(config_cursor);
+  int cursor_y = settings.get_element_location_y(config_cursor);
   lcd.setCursor(cursor_x,cursor_y);
   lcd.cursor();
 
   
 /**************************BUTTON LOGIC **************************/
    int button = read_LCD_buttons();
-   if (button == btnDOWN){
-      if (config_cursor_state == config_cursor_pos_size-1){}
-      else {config_cursor_state++;}}
+   if (button == btnDOWN)
+   {
+      settings.next_element(1);
+   }
    
-   if (button == btnUP){
-      if (config_cursor_state == 0) {}
-      else {
-       config_cursor_state = config_cursor_state-1;}}
+   if (button == btnUP)
+   {
+      settings.previous_element(1);
+   }
 
    if (button == btnRIGHT){
-      if(config_cursor_state==0){}
+      if(config_cursor==0){}
       else{
         //config_value[config_cursor_state-1]=min0max100(config_value[config_cursor_state-1]+1);}}
-        set_cmd_value(config_cursor_state-1,min0max100(config_value[config_cursor_state-1]+1));}}
+        set_cmd_value(config_cursor-1,min0max100(config_value[config_cursor-1]+1));}}
         
    if (button == btnLEFT){
-      if(config_cursor_state==0){}
+      if(config_cursor==0){}
       else{
-        set_cmd_value(config_cursor_state-1,min0max100(config_value[config_cursor_state-1]-1));}}
+        set_cmd_value(config_cursor-1,min0max100(config_value[config_cursor-1]-1));}}
         
-   if (button == btnSELECT &&config_cursor_state == 0){
+   if (button == btnSELECT &&config_cursor == 0){
     //on_off = true;
     state = 11;
    }
@@ -320,6 +338,7 @@ void Lcd_menu::state_display() //State 1
 
  void Lcd_menu::state_security()
  {
+  int security_cursor = security.get_cursor_position();
   lcd.setCursor(0, 0);
   lcd.print(" Enter Passcode ");
   lcd.setCursor(0, 1);
@@ -330,36 +349,35 @@ void Lcd_menu::state_display() //State 1
   lcd.print(passcode_try[3]);
   lcd.print("  Quit");
 
-  int cursor_x = security_cursor_pos[0][security_cursor_state];
-  int cursor_y = security_cursor_pos[1][security_cursor_state];
+
+  int cursor_x = security.get_element_location_x(security_cursor);
+  int cursor_y = security.get_element_location_y(security_cursor);
   lcd.setCursor(cursor_x,cursor_y);
-  lcd.cursor();
+  lcd.cursor(); 
+
 
     //Button logic
   int button = read_LCD_buttons();
   
    if (button == btnRIGHT){
-      if (security_cursor_state == security_cursor_pos_size-1){
-        security_cursor_state = 0;}
-      else {
-        security_cursor_state++;}
+      security.next_element();
+
    }
    if (button == btnLEFT){
-      if (security_cursor_state == 0){
-        security_cursor_state = security_cursor_pos_size-1 ;}
-      else {
-        security_cursor_state = security_cursor_state-1;}}
+      security.previous_element();
+   }
 
-   if (security_cursor_state != 4) 
+
+   if (security_cursor != 4) 
    {
-     if ((button == btnUP) && (passcode_try[security_cursor_state] != 9))
+     if ((button == btnUP) && (passcode_try[security_cursor] != 9))
      {
-        passcode_try[security_cursor_state] = (passcode_try[security_cursor_state]+1);
+        passcode_try[security_cursor] = (passcode_try[security_cursor]+1);
      }
   
-     if ((button == btnDOWN) && (passcode_try[security_cursor_state] != 0))
+     if ((button == btnDOWN) && (passcode_try[security_cursor] != 0))
      {
-        passcode_try[security_cursor_state] = (passcode_try[security_cursor_state]-1)%10;
+        passcode_try[security_cursor] = (passcode_try[security_cursor]-1)%10;
      }
   
      if (button == btnSELECT)
@@ -419,6 +437,15 @@ void Lcd_menu::state_display() //State 1
   passcode[2] = unit_2;
   passcode[3] = unit_3;
  }
+
+ /**********************************************************************************
+    ____        __  __                  
+   / __ )__  __/ /_/ /_____  ____  _____
+  / __  / / / / __/ __/ __ \/ __ \/ ___/
+ / /_/ / /_/ / /_/ /_/ /_/ / / / (__  ) 
+/_____/\__,_/\__/\__/\____/_/ /_/____/  
+                                        
+  ***********************************************************************************/
 int Lcd_menu::read_LCD_buttons()
 {
    adc_key_in = analogRead(0);      // read the value from the sensor
