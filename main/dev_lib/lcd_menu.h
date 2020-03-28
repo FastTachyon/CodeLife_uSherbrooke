@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include <string.h>
+#include "screen.h"
 
 
 
@@ -11,6 +12,8 @@ class Lcd_menu
     public:
         //Constructeur, initilise beaucoup de variables
         Lcd_menu();
+        Screen security;
+        Screen settings;
         virtual ~Lcd_menu();
 
         //À rouler à tous les 20-100ms

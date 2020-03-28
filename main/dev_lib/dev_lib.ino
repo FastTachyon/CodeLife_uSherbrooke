@@ -1,8 +1,9 @@
-
+#include "screen.h"
 #include "lcd_menu.h"
 
 
 Lcd_menu lcd_menu; 
+Screen screen;
 
 
 void setup() {
@@ -11,10 +12,12 @@ void setup() {
   lcd_menu.set_InspiPressure_cmd(21);
   lcd_menu.set_RespiratoryRate_cmd(11);
   lcd_menu.set_IERatio_cmd(21);
-  lcd_menu.set_passcode(1,1,1,1);
+  lcd_menu.set_passcode(0,0,0,0);
+  
  }
 
 void loop() {
+  //screen.test();
   lcd_menu.lcd_run();
   
   lcd_menu.set_TidalVolume_reading(lcd_menu.get_TidalVolume_cmd());
