@@ -44,6 +44,8 @@ class Lcd_menu
         void set_Peep_pressure(int inspi_p);
         void set_FiO2(int fio2);
 
+        void set_passcode(int unit_0, int unit_1, int unit_2, int unit_3);
+
     protected:
 
     private:
@@ -96,7 +98,7 @@ class Lcd_menu
         void config_parser(int index);
 
         //Security
-         int passcode[4]={1,0,0,0};
+         int passcode[4]={0,0,0,0};
          int passcode_try[4]={0,0,0,0};
          int security_cursor_pos[2][5];
          int security_cursor_state=0;
