@@ -1,5 +1,6 @@
 #include "Wire.h"
 #include "pressure.h"
+#include "lcd_menu.h"
 #include <BME280I2C.h>
 
 #define NB_MA_PRESSURE 3
@@ -32,17 +33,17 @@
 #define psensor3 0x28
 
 // *** Doctor variables *** //
-int resp_per_minute;
-int ie_ratio;
+int resp_per_minute = 30;
+float ie_ratio = 0.5;
 int hp_pressure;
 int lp_pressure;
 int tidal_volume;
 
 
 // *** Measure *** //
-float time_cycle = resp_per_minute / 60.0;
-float time_inspi = ie_ratio * time_cycle;
-float time_expi = (1-ie_ratio) * time_cycle;
+float freq_cycle = resp_per_minute / 60.0;
+float time_inspi = ie_ratio / freq_cycle;
+float time_expi = (1-ie_ratio) / freq_cycle;
 float atm = 100000;
 
 // *** Variables *** //
@@ -64,7 +65,8 @@ int timer_init = 0;
 int timer_current = 0;
 int timer_prev = 0;
 
-float frequency = 0.2; // [hz]
+// Frequency of the code
+float frequency = 60; // [hz]
 float period = 1/frequency * 1000; // [ms]
 
 Pressure_gauge venturi_sensor(psensor1);
@@ -104,6 +106,7 @@ void band1_0() {
   check_LP();
   pressure_sensor_read2();
   bme280_getdata();
+  valve_control();
   //venturi_measure();
 }
 // Mid priority functions part 1
@@ -114,7 +117,6 @@ void band2_0() {
 void band2_1() {
   //FiO2_sense();
   //check_FiO2();
-  valve_control();
 }
 // Low priority functions part 1
 void band3_0() {
@@ -144,6 +146,7 @@ void setup() {
   valve_setup();
   // Initialisation Timer
   timer_init = millis();
+  pinMode(13,OUTPUT);
 }
 
 void loop() {
@@ -192,14 +195,22 @@ void state_machine(){
     // IF BUTTON PRESS, INSPIRATION
   }
   // INSPIRATION --> EXPIRATION
-  else if (current_state == INSPIRATION &&  (timer_state - timer_state_prev) >= time_inspi ){
+  else if (current_state == INSPIRATION &&  (timer_state - timer_state_prev) >= time_inspi*1000 ){
     current_state = EXPIRATION;
     timer_state_prev = timer_state;
+    Serial.print("State: ");
+    Serial.println(time_inspi);
+    Serial.print("Time: ");
+    Serial.println(timer_state);
     }
   // EXPIRATION --> INSPIRATION
-  else if(current_state == EXPIRATION && (timer_state - timer_state_prev) >= time_expi){
+  else if(current_state == EXPIRATION && (timer_state - timer_state_prev) >= time_expi*1000){
     current_state = INSPIRATION;
     timer_state_prev = timer_state;
+    Serial.print("State: ");
+    Serial.println(current_state);
+    Serial.print("Time: ");
+    Serial.println(timer_state);
     }
    // Assisted ventilation mode switch (TBD)
    //else if (pressure < low_pressure && mode == assisted){
@@ -405,6 +416,20 @@ void pressure_sensor_read2(){
     pressure2 = pressure_sensor2.get_pressure();
 }
 
+// * LCD * //
+// Variables //
+Lcd_menu lcd_menu; 
+// Function //
+
+void setup_lcd(){
+  lcd_menu.set_TidalVolume_cmd(41); //Ça se configure en décimêtre cube, pas centimètre cube. 
+  lcd_menu.set_InspiPressure_cmd(21);
+  lcd_menu.set_RespiratoryRate_cmd(11);
+  lcd_menu.set_IERatio_cmd(21);
+ }
+ void get_lcd(){
+  
+ }
 /*
 // * Venturi Flowmeter * //
 // Variables //
