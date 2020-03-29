@@ -5,6 +5,8 @@ int count=0;
 void setup() {
   Serial.begin(9600);
   Serial.println("Hello World");
+  Serial.print("MCUSR: ");
+  Serial.println(MCUSR);
    wdt_enable(WDTO_2S); // Max 8s, ici setté à 2s
 }
 
