@@ -5,6 +5,41 @@
 #include <Vector.h>
 const int ELEMENT_COUNT_MAX =10;
 
+class Config
+{
+  public:
+    Config();
+    virtual ~Config();
+    
+    void set_display(String display_);
+    void set_value(int value);
+    int get_value();
+    String get_line();
+
+    void set_minMax(int min_, int max_);
+    void set_cursor(int x, int y);
+    void set_displayType(int nb_digit_, int nb_comma_);
+
+    String create_display();
+    String create_line();
+  private:
+    String display_name; 
+    String line;
+    int value=0; 
+    int min=0;
+    int max=0; 
+    int display_type; 
+    int cursor_x;
+    int cursor_y; 
+    int nb_digit;
+    int pos_comma;
+    int minMax(int value_, int min_value, int max_value);
+
+
+    void putComma(char out[],char in[], int nb_comma, int nb_digit_);
+    void intToChar(char out[], int number,int nb_digit_);
+ 
+};
 class Screen
 {
     public:
@@ -31,6 +66,8 @@ class Screen
        int storage_array_y[ELEMENT_COUNT_MAX];
        Vector<int> element_location_x;
        Vector<int> element_location_y;
+       String intToChar(int number,int nb_digit_);
+       int minMax(int value, int min_value, int max_value);
     
 };
 

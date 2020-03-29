@@ -107,11 +107,11 @@ int mean_int(int *arr, int SizeOfArray ){
 // High priority functions
 void band1_0() {
   state_machine(); // Cycle and time management
-  //FiO2_sense();
-  //check_FiO2();
-  //check_disconnect(); 
-  //check_HP();
-  //check_LP();
+  FiO2_sense();
+  check_FiO2();
+  check_disconnect(); 
+  check_HP();
+  check_LP();
   //pressure_sensor_read2();
   //bme280_getdata();
   //valve_control();
@@ -157,7 +157,7 @@ void setup() {
   // Initialisation Timer
   timer_init = millis();
   pinMode(13,OUTPUT);
-  Serial.println(index);
+  Serial.println(resp_per_minute);
 }
 
 void loop() {
@@ -462,7 +462,7 @@ int lcd_measured_tidal_volume = measured_tidal_volume;
 int lcd_measured_pressure_inspi = measured_pressure_inspi;
 int lcd_measured_pressure_expi = measured_pressure_expi;
 int lcd_FiO2 = FiO2;
-
+int lcd_button;
 // Function //
 void setup_lcd(){
   lcd_menu.set_TidalVolume_cmd((int) (tidal_volume)); 
@@ -475,24 +475,18 @@ void setup_lcd(){
  }
  void get_lcd(){
   // Inputs from the doctor
-  lcd_menu.lcd_run();
-  input_tidal_volume = lcd_menu.get_TidalVolume_cmd(); //Objectif de tidal volume
-  high_pressure = cmH2O_2_Pa * lcd_menu.get_InspiPressure_cmd(); // Peak pressure
-  resp_per_minute = lcd_menu.get_RespiratoryRate_cmd();
-  ie_ratio = ((float) lcd_menu.get_IERatio_cmd())/10;
-  FiO2_set = lcd_menu.get_FiO2Target_cmd();
-  
-  if (  old_input_tidal_volume != input_tidal_volume || old_high_pressure != high_pressure ||
-  old_resp_per_minute != resp_per_minute || old_ie_ratio != ie_ratio||
-  old_FiO2_set != FiO2_set){
-
-  // Saving current state
-    old_input_tidal_volume = input_tidal_volume;
-    old_high_pressure = high_pressure;
-    old_resp_per_minute = resp_per_minute;
-    old_ie_ratio = ie_ratio;
-    old_FiO2_set = FiO2_set;
-  }
+  lcd_button = lcd_menu.read_LCD_buttons();
+  if (lcd_button != 5){ // Is a button read
+      lcd_menu.lcd_run();
+      lcd_menu.read_LCD_buttons();
+      lcd_menu.lcd_run();
+      input_tidal_volume = lcd_menu.get_TidalVolume_cmd(); //Objectif de tidal volume
+      high_pressure = cmH2O_2_Pa * lcd_menu.get_InspiPressure_cmd(); // Peak pressure
+      resp_per_minute = lcd_menu.get_RespiratoryRate_cmd();
+      ie_ratio = ((float) lcd_menu.get_IERatio_cmd())/10;
+      FiO2_set = lcd_menu.get_FiO2Target_cmd();
+     
+   }
 }
  void refresh_lcd(){
   if (alarm != lcd_alarm || current_state != lcd_current_state || 

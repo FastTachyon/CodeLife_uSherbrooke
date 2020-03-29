@@ -11,10 +11,10 @@ void setup() {
 
   Serial.begin(9600); 
   Serial.println("Hello World");
-  //lcd_menu.set_TidalVolume_cmd(41); //Ça se configure en décimêtre cube, pas centimètre cube. 
-  //lcd_menu.set_InspiPressure_cmd(21);
-  //lcd_menu.set_RespiratoryRate_cmd(11);
-  //lcd_menu.set_IERatio_cmd(21);
+  lcd_menu.set_TidalVolume_cmd(41); //Ça se configure en décimêtre cube, pas centimètre cube. 
+  lcd_menu.set_InspiPressure_cmd(21);
+  lcd_menu.set_RespiratoryRate_cmd(11);
+  lcd_menu.set_IERatio_cmd(21);
   lcd_menu.set_passcode(0,0,0,0);
   
  }
