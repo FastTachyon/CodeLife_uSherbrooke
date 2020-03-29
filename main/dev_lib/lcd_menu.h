@@ -41,6 +41,7 @@ class Lcd_menu
         void setStateMachine(int state);
 
         //Récupérer les variables de controles
+        int get_cmd_value(int cmd_);
         int get_TidalVolume_cmd();
         int get_InspiPressure_cmd();
         int get_RespiratoryRate_cmd();
@@ -89,7 +90,7 @@ class Lcd_menu
         int out_peep_pressure;
         int out_fio2;
       
-        bool on_off;
+        bool on_off=false;
 
 
         void  set_cmd_value(int cmd, int value);
@@ -107,11 +108,7 @@ class Lcd_menu
         Screen display;
 
         //config
-        int config_list;
-        int config_value[NB_CONFIG];
         Config config[NB_CONFIG];
-
-        void config_parser(int index);
 
         //Security
          int passcode[4]={0,0,0,0};
@@ -123,7 +120,6 @@ class Lcd_menu
 
         /********************************UTILITAIRE**********************************/
         String intToChar(int number, int nb_digit); 
-        int min0max100(int number);
         int minMax(int value, int min_value, int max_value);
         
      

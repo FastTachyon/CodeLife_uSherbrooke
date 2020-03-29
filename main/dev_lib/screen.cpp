@@ -45,27 +45,39 @@ void Config::set_minMax(int min_, int max_)
   min = min_;
   max = max_;
 }
-void Config::set_cursor(int x, int y)
+
+int Config::get_cursor_x()
 {
-  cursor_x = x; 
-  cursor_y = y;
+  return cursor_x; 
 }
+int Config::get_cursor_y()
+{
+  return cursor_y;
+}
+void Config::value_pp()
+{
+  set_value(value+increment);
+}
+void Config::value_mm()
+{
+  set_value(value-increment);
+}
+    
+void Config::set_increment(int increment_)
+{
+  increment = increment_;
+}
+int Config::get_increment(){
+  return increment;
+}
+
 void Config::set_displayType(int nb_digit_, int pos_comma_)
 {
   nb_digit = nb_digit_; 
   pos_comma = pos_comma_;
 }
 
-String Config::create_display()
-{
- int flag_comma =0;
- if (pos_comma!=0) {flag_comma= 1;}
- cursor_x = 16-nb_digit-flag_comma;
- cursor_y = 1;
 
- 
- return " ";
-}
 int Config::minMax(int value_, int min_value, int max_value)
 {
   if (value_ < min_value){
@@ -78,7 +90,7 @@ int Config::minMax(int value_, int min_value, int max_value)
 }
 String Config::create_line()
 { 
-  
+
   char etape1[16]={}; 
   intToChar(etape1,value,nb_digit);
  
@@ -88,7 +100,10 @@ String Config::create_line()
   int flag_comma=0;
   if (pos_comma >= 0)
     {flag_comma = 1;}
-    
+
+  cursor_x = 16-nb_digit-flag_comma;
+  cursor_y = 1;
+  
   char etape3[17]={};
   int sep = 16-nb_digit-flag_comma;
   for (int i=0; i<16; i++)
@@ -112,14 +127,14 @@ String Config::create_line()
   
 }
 
+
+
 void Config::intToChar(char out[], int number,int nb_digit_)
  {
-    
     char line[4]={};
     sprintf(line,"%%0%dd",nb_digit_);
     sprintf(out,line, number);
     return;
- 
  }
 
  

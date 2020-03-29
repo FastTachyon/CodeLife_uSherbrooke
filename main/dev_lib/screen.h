@@ -15,13 +15,19 @@ class Config
     void set_value(int value);
     int get_value();
     String get_line();
+    int get_cursor_x();
+    int get_cursor_y();
 
     void set_minMax(int min_, int max_);
-    void set_cursor(int x, int y);
     void set_displayType(int nb_digit_, int nb_comma_);
+    void set_increment(int increment_);
+    int get_increment();
 
-    String create_display();
+    void value_pp();
+    void value_mm();
+    
     String create_line();
+    
   private:
     String display_name; 
     String line;
@@ -33,6 +39,7 @@ class Config
     int cursor_y; 
     int nb_digit;
     int pos_comma;
+    int increment=1;
     int minMax(int value_, int min_value, int max_value);
 
 
@@ -54,7 +61,7 @@ class Screen
         void set_cursor_position(int position);
         int get_cursor_position();
         int get_element_size();
-
+        
         void next_element(int option=0);
         void previous_element(int option=0);
     protected:
