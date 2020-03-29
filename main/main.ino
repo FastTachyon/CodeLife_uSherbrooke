@@ -3,8 +3,6 @@
 #include "lcd_menu.h"
 #include <BME280I2C.h>
 
-
-#define NB_MA_PRESSURE 3
 #define pi 3.1415926
 #define Pa_2_cmH2O 0.0101972
 #define cmH2O_2_Pa 98.0665
@@ -51,14 +49,14 @@ float time_expi = (1-ie_ratio) / freq_cycle;
 float atm = 100000;
 
 // *** Variables *** //
-int alarm = 4;
+int alarm = 0;
 int index; 
 int sound_freq[2] = {0,0} ;
 
 float pressure = 0;
 float pressure2 = 0;
-float high_pressure = 103000;
-float low_pressure = 98000;
+float high_pressure = 10000;
+float low_pressure = -5000;
 float disco_dP = 500;
 int current_state = INSPIRATION; // 1 = Inspiration; 2 = Expiration; 3 = Stopped;
 int prev_state = INSPIRATION;
@@ -100,6 +98,7 @@ int mean_int(int *arr, int SizeOfArray ){
   }
   return test;
 }
+
 
 // *** Bands *** //
 
@@ -158,8 +157,6 @@ void setup() {
 }
 
 void loop() {
-  timer_current = millis();
- if (timer_current - timer_prev > period){
    switch (mod(index,4)){
     case 1:
       band1_0();
@@ -182,9 +179,6 @@ void loop() {
       band3_1();
       break;
     }
-    index ++;
-    timer_prev = timer_current;
- }
 }
 
 // *** Functions to be distributed inside the multiple bands *** //
@@ -283,20 +277,16 @@ int disconnect_duration = 200;
 int disconnect_tones[2] = {2000, 1000};
 int disconnect_index = 0;
 
-float MA_pressure[NB_MA_PRESSURE];
-float MA_pressure_index = 0;
-float current_MA_pressure = 0;
-
 // Function //
 void check_disconnect(){
   if (current_state == INSPIRATION){
     // patient pressure is at atmosphere && 10% of the inspiration time has passed and  
-    if (abs(pressure - atm) < disco_dP && (timer_state - timer_state_prev) >= 0.1 * time_inspi)
+    if (abs(pressure) < disco_dP && (timer_state - timer_state_prev) >= 0.1 * time_inspi)
     {
       alarm = DISCONNECT;
       memcpy(sound_freq, disconnect_tones, sizeof(sound_freq[0])*2);
     }
-    else if(abs(pressure - atm) > disco_dP && (timer_state - timer_state_prev) >= 0.1 * time_inspi ){
+    else if(abs(pressure) > disco_dP && (timer_state - timer_state_prev) >= 0.1 * time_inspi ){
       alarm = NO_ALARM;
     }
   }
@@ -378,6 +368,7 @@ void valve_control(){
 // Variables //
 BME280I2C bme;
 float bme_pressure;
+float bme_offset_pressure;
 float bme_humidity;
 float bme_temperature;
 BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
@@ -402,9 +393,18 @@ void bme280_setup(){
      default:
        Serial.println("Found UNKNOWN sensor! Error!");
   }
+    float sum=0;
+    int nb = 10;
+    for(int i=0;i<nb;i++)
+    {
+      bme.read(bme_pressure, bme_temperature, bme_humidity, tempUnit, presUnit);
+      sum = sum+ bme_pressure; 
+    }
+    bme_offset_pressure = sum/nb;
 }
 void bme280_getdata(){
    bme.read(bme_pressure, bme_temperature, bme_humidity, tempUnit, presUnit);
+   pressure = bme_pressure - bme_offset_pressure; // This is currently the main pressure sensor
 }
 
 // * Pressure sensor * //
@@ -537,11 +537,16 @@ float venturi_normal_section = pi*pow(venturi_normal_radi,2);
 // Calculate // 
 void venturi_measure(){
   venturi_sensor.send();
-  venturi_pressure = venturi_sensor.read();
-  venturi_speed = sqrt(abs(2*venturi_pressure)/(density*(1-pow(venturi_small_section,2)/pow(venturi_normal_section,2))));
+  venturi_sensor.read();
+  venturi_pressure = venturi_sensor.get_pressure();
+  dummy = abs(2*venturi_pressure/(density*(1-pow(venturi_normal_section,2)/pow(venturi_small_section,2))));
+  venturi_speed = sqrt(dummy);
   venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
-  Serial.print("venturi: ");
-  Serial.println(venturi_pressure);
+  //Serial.print("venturi: ");
+  //Serial.println(venturi_pressure);
+  //Serial.print("venturi_flow: ");
+  //Serial.println(dummy);
+  Serial.println(venturi_speed);
  }
 void venturi_TidalVolume(){
   venturi_time = millis();
