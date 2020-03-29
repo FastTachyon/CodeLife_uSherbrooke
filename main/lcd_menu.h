@@ -44,6 +44,8 @@ class Lcd_menu
         void set_Peep_pressure(int inspi_p);
         void set_FiO2(int fio2);
 
+        void set_passcode(int unit_0, int unit_1, int unit_2, int unit_3);
+
     protected:
 
     private:
@@ -60,17 +62,16 @@ class Lcd_menu
         int state; 
         void state_display(); 
         void state_config(); 
-
+        void state_security();
+        
         //Value and readings
         int tidalVolume_reading; 
         int out_inspi_pressure; 
         int out_peep_pressure;
         int out_fio2;
       
-        int tidalVolume_cmd;
-        int maxPressure_cmd;
-        int respiratoryRate_cmd;
         bool on_off;
+
 
         void  set_cmd_value(int cmd, int value);
         
@@ -95,6 +96,14 @@ class Lcd_menu
         int config_value[5];
 
         void config_parser(int index);
+
+        //Security
+         int passcode[4]={0,0,0,0};
+         int passcode_try[4]={0,0,0,0};
+         int security_cursor_pos[2][5];
+         int security_cursor_state=0;
+         int security_cursor_pos_size;
+         void reset_passcode_try();
 
         /********************************UTILITAIRE**********************************/
         String intToChar(int number, int nb_digit); 
