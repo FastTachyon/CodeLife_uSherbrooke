@@ -1,22 +1,23 @@
 #include "lcd_menu.h"
 
-#define btnRIGHT  0
-#define btnUP     1
-#define btnDOWN   2
-#define btnLEFT   3
-#define btnSELECT 4
-#define btnNONE   5
 
-#define InspiPressure 0
-#define TidalVolume 1
-#define RespiratoryRate 2
-#define IERatio 3
-#define FiO2Target 4
 using namespace std;
 
 Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
 {
+  config[InspiPressure].set_display("PI Max (cm)");
+  config[InspiPressure].set_minMax(10,40);
+  config[InspiPressure].set_value(20);
+  config[InspiPressure].set_displayType(2,-1);
 
+  config[TidalVolume].set_display("PI Max (cm)");
+  config[TidalVolume].set_minMax(10,40);
+  config[TidalVolume].set_value(20);
+  config[TidalVolume].set_displayType(2,-1);
+  //config[TidalVolume]
+  //config[RespiratoryRate]
+  //config[IERatio]
+  //config[FiO2Target]
   //LCD
   //int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
   //lcd = new LiquidCrystal(rs, en, d4, d5, d6, d7);
@@ -41,31 +42,11 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
 
     on_off = false;
 
-
   //display 
-  display_cursor_pos[0][0] = 9; // The conf option 
-  display_cursor_pos[1][0] = 1; 
-  display_cursor_pos[0][1] = 13; // the off option
-  display_cursor_pos[1][1] = 1;  
-  display_cursor_state = 0;
-  display_cursor_pos_size = sizeof(display_cursor_pos[0])/2; 
+  display.add_element_location(9,1);
+  display.add_element_location(13,1);
 
   //Config
- /* config_cursor_pos[0][0] = 11;
-  config_cursor_pos[1][0] = 0;
-  config_cursor_pos[0][1] = 0;
-  config_cursor_pos[1][1] = 1;
-  config_cursor_pos[0][2] = 0;
-  config_cursor_pos[1][2] = 1;
-  config_cursor_pos[0][3] = 0;
-  config_cursor_pos[1][3] = 1;
-  config_cursor_pos[0][4] = 0;
-  config_cursor_pos[1][4] = 1;
-  config_cursor_pos[0][5] = 0;
-  config_cursor_pos[1][5] = 1;
-  config_cursor_pos_size = sizeof(config_cursor_pos[0])/2; 
-  config_cursor_state = 0;*/
-  
   settings.add_element_location(11,0);
   settings.add_element_location(0,1);
   settings.add_element_location(0,1);
@@ -73,26 +54,14 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   settings.add_element_location(0,1);
   settings.add_element_location(0,1);
   
-  config_value[TidalVolume]=40;
+  /*config_value[TidalVolume]=40;
   config_value[RespiratoryRate]=10;
   config_value[InspiPressure]=20;
   config_value[IERatio]=20;
-  config_value[FiO2Target]=21;
+  config_value[FiO2Target]=21;*/
   config_list=0;
 
   //Security
- /* security_cursor_pos[0][0]=6;
-  security_cursor_pos[1][0]=1;
-  security_cursor_pos[0][1]=7;
-  security_cursor_pos[1][1]=1;
-  security_cursor_pos[0][2]=8;
-  security_cursor_pos[1][2]=1;
-  security_cursor_pos[0][3]=9;
-  security_cursor_pos[1][3]=1;
-  security_cursor_pos[0][4]=12;
-  security_cursor_pos[1][4]=1;
-  security_cursor_pos_size= sizeof(security_cursor_pos[0])/2; */
-
   security.add_element_location(6,1);
   security.add_element_location(7,1);
   security.add_element_location(8,1);
@@ -106,14 +75,13 @@ Lcd_menu::Lcd_menu() : lcd(8, 9, 4, 5, 6, 7)
   alarm_name[2] = "!Hig P   ";
   alarm_name[3] = "!Dis P   ";
   alarm_name[4] = "!Low O   ";
-  alarm = 0;
 
   state_machine_name[1] =  "Inspi    ";
   state_machine_name[2] =  "Expi     ";
   state_machine_name[3] =  "Stop     ";
   state_machine=1;
   
-  
+  readEEPROM();
 }
 
 Lcd_menu::~Lcd_menu()
@@ -168,7 +136,7 @@ void Lcd_menu::state_config() //State 1
 {
   int config_cursor = settings.get_cursor_position();
   int row = min0max100(config_cursor-1);
-
+  Serial.println(config[InspiPressure].create_line());
   //Refresh the display
   lcd.setCursor(0, 0);
   lcd.print("Settings");
@@ -177,45 +145,40 @@ void Lcd_menu::state_config() //State 1
     lcd.print("Done ");}
   else {
     lcd.print("Start ");}
-  
-  config_parser(config_cursor);
- /* lcd.setCursor(0, 1);
-  lcd.print(config_name[row]);
-  lcd.print("");
-  lcd.print(intToChar(config_value[row],2)); 
-  */
 
+  //lcd.setCursor(0, 1);
+  //lcd.print(config[InspiPressure].create_line());
+  config_parser(config_cursor);
 
   int cursor_x = settings.get_element_location_x(config_cursor);
   int cursor_y = settings.get_element_location_y(config_cursor);
   lcd.setCursor(cursor_x,cursor_y);
   lcd.cursor();
-
+ 
   
 /**************************BUTTON LOGIC **************************/
-   int button = read_LCD_buttons();
-   if (button == btnDOWN)
+   //int button = read_LCD_buttons();
+   if (button_pressed == btnDOWN)
    {
       settings.next_element(1);
    }
    
-   if (button == btnUP)
+   if (button_pressed == btnUP)
    {
       settings.previous_element(1);
    }
 
-   if (button == btnRIGHT){
+   if (button_pressed == btnRIGHT){
       if(config_cursor==0){}
       else{
-        //config_value[config_cursor_state-1]=min0max100(config_value[config_cursor_state-1]+1);}}
         set_cmd_value(config_cursor-1,min0max100(config_value[config_cursor-1]+1));}}
         
-   if (button == btnLEFT){
+   if (button_pressed == btnLEFT){
       if(config_cursor==0){}
       else{
         set_cmd_value(config_cursor-1,min0max100(config_value[config_cursor-1]-1));}}
         
-   if (button == btnSELECT &&config_cursor == 0){
+   if (button_pressed == btnSELECT &&config_cursor == 0){
     //on_off = true;
     state = 11;
    }
@@ -270,7 +233,7 @@ void Lcd_menu::config_parser(int index)
 ******************************************************************/                                       
 void Lcd_menu::state_display() //State 1
 {
-
+  int display_cursor = display.get_cursor_position();
   //Refresh the display
   lcd.setCursor(0, 1);
   if (alarm==0){
@@ -293,33 +256,27 @@ void Lcd_menu::state_display() //State 1
   
 
   //Set the cursor according to the state of the cursor
-  int cursor_x = display_cursor_pos[0][display_cursor_state];
-  int cursor_y = display_cursor_pos[1][display_cursor_state];
+  int cursor_x = display.get_element_location_x(display_cursor);
+  int cursor_y = display.get_element_location_y(display_cursor);
   lcd.setCursor(cursor_x,cursor_y);
   lcd.cursor();
 
   //Button logic
-  int button = read_LCD_buttons();
+  //int button = read_LCD_buttons();
   
-   if (button == btnRIGHT){
-      if (display_cursor_state == display_cursor_pos_size-1){
-        display_cursor_state = 0;}
-      else {
-        display_cursor_state++;}
-   }
-   if (button == btnLEFT){
-      if (display_cursor_state == 0){
-        display_cursor_state = display_cursor_pos_size-1 ;}
-      else {
-        display_cursor_state = display_cursor_state-1;}}
+   if (button_pressed == btnRIGHT){
+    display.next_element();}
+    
+   if (button_pressed == btnLEFT){
+    display.previous_element();}
         
-   if (button == btnSELECT)
+   if (button_pressed == btnSELECT)
    {
-      if (display_cursor_state == 0) 
+      if (display_cursor == 0) 
       {
         state = 12;
       }
-      else if (display_cursor_state == 1)
+      else if (display_cursor == 1)
       {
         state = 13;
         //on_off=false;
@@ -357,30 +314,30 @@ void Lcd_menu::state_display() //State 1
 
 
     //Button logic
-  int button = read_LCD_buttons();
+  //int button = read_LCD_buttons();
   
-   if (button == btnRIGHT){
+   if (button_pressed == btnRIGHT){
       security.next_element();
 
    }
-   if (button == btnLEFT){
+   if (button_pressed == btnLEFT){
       security.previous_element();
    }
 
 
    if (security_cursor != 4) 
    {
-     if ((button == btnUP) && (passcode_try[security_cursor] != 9))
+     if ((button_pressed  == btnUP) && (passcode_try[security_cursor] != 9))
      {
         passcode_try[security_cursor] = (passcode_try[security_cursor]+1);
      }
   
-     if ((button == btnDOWN) && (passcode_try[security_cursor] != 0))
+     if ((button_pressed  == btnDOWN) && (passcode_try[security_cursor] != 0))
      {
         passcode_try[security_cursor] = (passcode_try[security_cursor]-1)%10;
      }
   
-     if (button == btnSELECT)
+     if (button_pressed == btnSELECT)
      {
         for(int i=0; i<4; i++)
         {
@@ -393,6 +350,7 @@ void Lcd_menu::state_display() //State 1
          if (state == 11)
           {
             state = 1;
+            writeEEPROM();
             on_off=true; 
           }
           else if (state ==12)
@@ -408,7 +366,7 @@ void Lcd_menu::state_display() //State 1
     }
     else 
     {
-      if(button ==btnSELECT)
+      if(button_pressed ==btnSELECT)
       {
         if (state == 11)
         {
@@ -438,6 +396,30 @@ void Lcd_menu::state_display() //State 1
   passcode[3] = unit_3;
  }
 
+ /*********************************************************************************     
+    ________________  ____  ____  __  ___
+   / ____/ ____/ __ \/ __ \/ __ \/  |/  /
+  / __/ / __/ / /_/ / /_/ / / / / /|_/ / 
+ / /___/ /___/ ____/ _, _/ /_/ / /  / /  
+/_____/_____/_/   /_/ |_|\____/_/  /_/   
+                                         
+ *********************************************************************************/
+void Lcd_menu::writeEEPROM()
+{
+  for(int i; i <NB_CONFIG;i++)
+  {
+      EEPROM.write(i,config_value[i]);
+  }
+
+}
+void Lcd_menu::readEEPROM()
+{
+  for(int i; i < NB_CONFIG;i++)
+  {
+    config_value[i]=EEPROM.read(i);
+  }
+}
+        
  /**********************************************************************************
     ____        __  __                  
    / __ )__  __/ /_/ /_____  ____  _____
@@ -468,7 +450,7 @@ int Lcd_menu::read_LCD_buttons()
   {
     old_value = return_value; 
   }
-
+   button_pressed=return_value;
    return return_value;  // when all others fail, return this...
 }
 
@@ -524,7 +506,7 @@ void  Lcd_menu::set_cmd_value(int cmd,int value)
 }
 void  Lcd_menu::set_TidalVolume_cmd(int volume)
 { 
-    config_value[TidalVolume] = minMax(volume, 0, 99);
+    config_value[TidalVolume] = minMax(volume/10, 0, 99);
 }
 void  Lcd_menu::set_InspiPressure_cmd(int pressure)
 {
