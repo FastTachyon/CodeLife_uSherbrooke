@@ -7,17 +7,21 @@ Screen screen;
 
 
 void setup() {
+
+
   Serial.begin(9600); 
-  lcd_menu.set_TidalVolume_cmd(41); //Ça se configure en décimêtre cube, pas centimètre cube. 
-  lcd_menu.set_InspiPressure_cmd(21);
-  lcd_menu.set_RespiratoryRate_cmd(11);
-  lcd_menu.set_IERatio_cmd(21);
+  Serial.println("Hello World");
+  //lcd_menu.set_TidalVolume_cmd(41); //Ça se configure en décimêtre cube, pas centimètre cube. 
+  //lcd_menu.set_InspiPressure_cmd(21);
+  //lcd_menu.set_RespiratoryRate_cmd(11);
+  //lcd_menu.set_IERatio_cmd(21);
   lcd_menu.set_passcode(0,0,0,0);
   
  }
 
 void loop() {
   //screen.test();
+  lcd_menu.read_LCD_buttons();
   lcd_menu.lcd_run();
   
   lcd_menu.set_TidalVolume_reading(lcd_menu.get_TidalVolume_cmd());
@@ -25,7 +29,7 @@ void loop() {
   lcd_menu.set_FiO2(lcd_menu.get_RespiratoryRate_cmd()+lcd_menu.get_IERatio_cmd());
   lcd_menu.set_Peep_pressure(lcd_menu.get_FiO2Target_cmd());
 
-  lcd_menu.startAlarm(0);
+  
   //Serial.print(lcd_menu.get_on_off());
 
   delay(50);
