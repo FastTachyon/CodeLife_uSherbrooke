@@ -12,16 +12,16 @@ class Config
     virtual ~Config();
     
     void set_display(String display_);
-    void set_value(int value);
-    int get_value();
+    void set_value(float value);
+    float get_value();
     String get_line();
     int get_cursor_x();
     int get_cursor_y();
 
     void set_minMax(int min_, int max_);
-    void set_displayType(int nb_digit_, int nb_comma_);
-    void set_increment(int increment_);
-    int get_increment();
+    void set_precision(int precision_);
+    void set_increment(float increment_);
+    float get_increment();
 
     void value_pp();
     void value_mm();
@@ -31,20 +31,19 @@ class Config
   private:
     String display_name; 
     String line;
-    int value=0; 
+    float value=0; 
     int min=0;
     int max=0; 
     int display_type; 
     int cursor_x;
     int cursor_y; 
-    int nb_digit;
-    int pos_comma;
-    int increment=1;
-    int minMax(int value_, int min_value, int max_value);
+    int precision;
+    float increment=1;
+    float minMax(float value_, float min_value, float max_value);
 
 
     void putComma(char out[],char in[], int nb_comma, int nb_digit_);
-    void intToChar(char out[], int number,int nb_digit_);
+    void intToChar(char out[], float number,int nb_digit_);
  
 };
 class Screen

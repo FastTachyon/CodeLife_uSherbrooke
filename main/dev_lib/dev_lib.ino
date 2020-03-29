@@ -31,7 +31,6 @@ void loop() {
     lcd_menu.lcd_run();
    
   }
-  
   lcd_menu.set_TidalVolume_reading  (lcd_menu.get_cmd_value(TidalVolume));
   lcd_menu.set_Inspi_pressure       (lcd_menu.get_cmd_value(InspiPressure));
   lcd_menu.set_FiO2                 (lcd_menu.get_cmd_value(FiO2Target));
