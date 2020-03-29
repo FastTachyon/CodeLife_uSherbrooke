@@ -29,7 +29,7 @@
 #define limitswitch_pin 26
 
 // * I2C BUS * //
-#define SERIAL_BAUD 115200
+#define SERIAL_BAUD 9600
 #define psensor1 0x28 // Venturi flow sensor
 #define psensor2 0x28 // Pressure sensor
 #define psensor3 0x28 // Calibration sensor
@@ -76,6 +76,8 @@ Pressure_gauge venturi_sensor(psensor1);
 Pressure_gauge pressure_sensor(psensor2);
 Pressure_gauge pressure_sensor3(psensor3);
 
+Lcd_menu lcd_menu; 
+
 // *** Shared functions *** // 
 // Module
 int mod(int a, int b) {
@@ -114,15 +116,16 @@ void band1_0() {
   //bme280_getdata();
   //valve_control();
   //venturi_measure();
+  get_lcd();
+  refresh_lcd();
 }
 // Mid priority functions part 1
 void band2_0() {
   sound();
-  get_lcd();
+
 }
 // Mid priority functions part 2
 void band2_1() {
-  refresh_lcd();
 }
 // Low priority functions part 1
 void band3_0() {
@@ -140,7 +143,7 @@ void band3_3() {
 // *** Setup and loop *** //
 
 void setup() {
-  // STarting serial communication
+  // Starting serial communication
   Serial.begin(SERIAL_BAUD);
   while(!Serial) {} // Wait
   Wire.begin();
@@ -150,35 +153,37 @@ void setup() {
   pinMode(buzzer_pin, OUTPUT); // Set buzzer
   //venturi_sensor.calibrate();
   //pressure_sensor2.calibrate();
-  valve_setup();
+  pinMode(valve_pin,OUTPUT);
   // Initialisation Timer
   timer_init = millis();
   pinMode(13,OUTPUT);
+  Serial.println(index);
 }
 
 void loop() {
    switch (mod(index,4)){
-    case 1:
+    case 0:
       band1_0();
       band2_0();
       band3_0();
       break;
-    case 2:
+    case 1:
       band1_0();
       band2_1();
       band3_2();
+      break;
+    case 2:
+      band1_0();
+      band2_0();
+      band3_1();
       break;
     case 3:
       band1_0();
       band2_0();
       band3_1();
       break;
-    case 4:
-      band1_0();
-      band2_0();
-      band3_1();
-      break;
     }
+    index++;
 }
 
 // *** Functions to be distributed inside the multiple bands *** //
@@ -351,10 +356,6 @@ void FiO2_sense(){
 // Variables //
 // No local variables needed
 // 
-void valve_setup(){
-pinMode(valve_pin,OUTPUT);
-}
-
 void valve_control(){
   if (current_state == INSPIRATION ){
     digitalWrite(valve_pin,HIGH);
@@ -442,7 +443,7 @@ void calc_display_pressure(){
 
 // * LCD * //
 // Variables //
-Lcd_menu lcd_menu; 
+
 int lcd_ie_ratio = 0;
 int input_tidal_volume;
 int measured_tidal_volume;
@@ -464,26 +465,27 @@ int lcd_FiO2 = FiO2;
 
 // Function //
 void setup_lcd(){
-  lcd_menu.set_TidalVolume_cmd(tidal_volume); // L or dm^3
+  lcd_menu.set_TidalVolume_cmd((int) (tidal_volume)); 
   lcd_menu.set_InspiPressure_cmd(hp_pressure_h20); // Pressure differential in cmH20
   lcd_menu.set_RespiratoryRate_cmd(resp_per_minute); 
   lcd_menu.set_IERatio_cmd((int) ie_ratio*10);
   lcd_menu.set_FiO2Target_cmd(FiO2_target);
-  lcd_menu.set_passcode(1,1,1,1);
+  lcd_menu.set_passcode(0,0,0,0);
+  lcd_menu.lcd_run();
  }
  void get_lcd(){
   // Inputs from the doctor
+  lcd_menu.lcd_run();
   input_tidal_volume = lcd_menu.get_TidalVolume_cmd(); //Objectif de tidal volume
   high_pressure = cmH2O_2_Pa * lcd_menu.get_InspiPressure_cmd(); // Peak pressure
   resp_per_minute = lcd_menu.get_RespiratoryRate_cmd();
   ie_ratio = ((float) lcd_menu.get_IERatio_cmd())/10;
   FiO2_set = lcd_menu.get_FiO2Target_cmd();
   
-
   if (  old_input_tidal_volume != input_tidal_volume || old_high_pressure != high_pressure ||
   old_resp_per_minute != resp_per_minute || old_ie_ratio != ie_ratio||
   old_FiO2_set != FiO2_set){
-    lcd_menu.lcd_run();
+
   // Saving current state
     old_input_tidal_volume = input_tidal_volume;
     old_high_pressure = high_pressure;
@@ -491,19 +493,19 @@ void setup_lcd(){
     old_ie_ratio = ie_ratio;
     old_FiO2_set = FiO2_set;
   }
- }
+}
  void refresh_lcd(){
   if (alarm != lcd_alarm || current_state != lcd_current_state || 
     measured_tidal_volume != lcd_measured_tidal_volume || measured_pressure_inspi != lcd_measured_pressure_inspi ||
     measured_pressure_expi != lcd_measured_pressure_expi || FiO2 != lcd_FiO2 ){
+    
      lcd_menu.startAlarm((int) alarm);
      lcd_menu.setStateMachine(current_state);
      lcd_menu.set_TidalVolume_reading(measured_tidal_volume);
      lcd_menu.set_Inspi_pressure(measured_pressure_inspi);
      lcd_menu.set_Peep_pressure(measured_pressure_expi);
      lcd_menu.set_FiO2(FiO2);
-     lcd_menu.lcd_run();
-
+    
      // Values currently inside the lcd
      lcd_alarm = alarm;
      lcd_current_state = current_state;
@@ -511,9 +513,8 @@ void setup_lcd(){
      lcd_measured_pressure_inspi = measured_pressure_inspi;
      lcd_measured_pressure_expi = measured_pressure_expi;
      lcd_FiO2 = FiO2;
-     Serial.print(FiO2);
-     Serial.print(lcd_menu.get_on_off());
-   }
+     lcd_menu.lcd_run();
+   }   
  }
 /*
 // * Venturi Flowmeter * //
