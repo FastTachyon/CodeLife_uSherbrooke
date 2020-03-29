@@ -2,6 +2,7 @@
 #include "pressure.h"
 #include "lcd_menu.h"
 #include <BME280I2C.h>
+#include "actuator.h"
 
 
 #define NB_MA_PRESSURE 3
