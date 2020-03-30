@@ -24,14 +24,14 @@ void Config::set_display(String display_)
 {
   display_name = display_;
 }
-void Config::set_value(int value_)
+void Config::set_value(float value_)
 {
   if(value_> max){value = max;}
   else if(value_< min){value=min;}
   else {value = value_;}
   
 }
-int Config::get_value()
+float Config::get_value()
 {
   return value;
 }
@@ -63,22 +63,21 @@ void Config::value_mm()
   set_value(value-increment);
 }
     
-void Config::set_increment(int increment_)
+void Config::set_increment(float increment_)
 {
   increment = increment_;
 }
-int Config::get_increment(){
+float Config::get_increment(){
   return increment;
 }
 
-void Config::set_displayType(int nb_digit_, int pos_comma_)
+void Config::set_precision(int precision_)
 {
-  nb_digit = nb_digit_; 
-  pos_comma = pos_comma_;
+  precision = precision_; 
 }
 
 
-int Config::minMax(int value_, int min_value, int max_value)
+float Config::minMax(float value_, float min_value, float max_value)
 {
   if (value_ < min_value){
     value_ = min_value;}
@@ -90,69 +89,28 @@ int Config::minMax(int value_, int min_value, int max_value)
 }
 String Config::create_line()
 { 
-
-  char etape1[16]={}; 
-  intToChar(etape1,value,nb_digit);
- 
-  char etape2[16]={};
-  putComma(etape2,etape1,pos_comma,nb_digit);
-  
-  int flag_comma=0;
-  if (pos_comma >= 0)
-    {flag_comma = 1;}
-
-  cursor_x = 16-nb_digit-flag_comma;
+  char step1[16]={}; 
+  dtostrf(value, 0, precision, step1);
+  cursor_x = 0;
   cursor_y = 1;
+  String step2(step1);
   
-  char etape3[17]={};
-  int sep = 16-nb_digit-flag_comma;
+  char step3[17]={};
+  int sep = 16-step2.length();
+  
   for (int i=0; i<16; i++)
   {
-    if(i<sep && i<display_name.length())
-    {
-      etape3[i] = display_name[i];
-    }
-    else if (i<sep)
-    {
-      etape3[i] = 32;
-    }
-    else
-    {
-      etape3[i] = etape2[i-sep];
-    }
+    if(i<sep && i<display_name.length()){
+      step3[i] = display_name[i];}
+    else if (i < sep){
+      step3[i] = 32;}
+    else{
+      step3[i] = step2[i-sep];}
   }
-  String out(etape3);
-  
+  String out(step3);
   return out;
-  
 }
 
-
-
-void Config::intToChar(char out[], int number,int nb_digit_)
- {
-    char line[4]={};
-    sprintf(line,"%%0%dd",nb_digit_);
-    sprintf(out,line, number);
-    return;
- }
-
- 
- void Config::putComma(char out[],char in[], int nb_comma, int nb_digit_)
- {
-  int flag_comma = 0; 
-  
-  for (int i=0; i<nb_digit_; i++)
-  {
-    if(i == nb_comma){
-      out[i]=46;
-      flag_comma=1;
-    }
-      out[i+flag_comma]=in[i];
-  }
-  
-  return;
- }
 /***********************************************************************************
  * _____ __________  _____________   __   ________    ___   __________
   / ___// ____/ __ \/ ____/ ____/ | / /  / ____/ /   /   | / ___/ ___/
