@@ -2,7 +2,7 @@
 #include "pressure.h"
 #include "lcd_menu.h"
 #include <BME280I2C.h>
-//#include "actuator.h"
+#include "actuator.h"
 
 #define pi 3.1415926
 #define Pa_2_cmH2O 0.0101972
