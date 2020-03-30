@@ -2,7 +2,7 @@
 #include "pressure.h"
 #include "lcd_menu.h"
 #include <BME280I2C.h>
-#include "actuator.h"
+//#include "actuator.h"
 
 #define pi 3.1415926
 #define Pa_2_cmH2O 0.0101972
@@ -24,9 +24,10 @@
 
 
 // * Physical pins needed * //
-#define buzzer_pin 2
-#define FiO2_pin A6
-#define valve_pin 22
+#define buzzer_pin 43
+#define FiO2_pin A7
+#define valve_pneu 51
+#define valve_expi 47
 #define limitswitch_pin 26
 
 // * I2C BUS * //
@@ -115,24 +116,25 @@ void band1_0() {
   check_LP();
   //pressure_sensor_read2();
   //bme280_getdata();
-  //valve_control();
   //venturi_measure();
-  get_lcd();
-  refresh_lcd();
+  valve_pneumatic();
+  valve_expiration();
 }
 // Mid priority functions part 1
 void band2_0() {
-  sound();
-
+  get_lcd();
 }
 // Mid priority functions part 2
 void band2_1() {
+  sound();
 }
 // Low priority functions part 1
 void band3_0() {
+  refresh_lcd();
 }
 // Low priority functions part 2
 void band3_1() {
+  calc_display_pressure();
 }
 // Low priority functions part 3
 void band3_2() {
@@ -148,17 +150,22 @@ void setup() {
   Serial.begin(SERIAL_BAUD);
   while(!Serial) {} // Wait
   Wire.begin();
+  Serial.println("Started");
   // Setting up the individual functionalities
+  Serial.println("1");
   setup_lcd();
   //bme280_setup();
+  Serial.println("2");
   pinMode(buzzer_pin, OUTPUT); // Set buzzer
   //venturi_sensor.calibrate();
   //pressure_sensor2.calibrate();
-  pinMode(valve_pin,OUTPUT);
+  pinMode(valve_pneu,OUTPUT);
+  pinMode(valve_expi,OUTPUT);
+  FiO2_cal();
+  Serial.println("3");
   // Initialisation Timer
   timer_init = millis();
-  pinMode(13,OUTPUT);
-  Serial.println(resp_per_minute);
+  Serial.print("started");
 }
 
 void loop() {
@@ -185,6 +192,7 @@ void loop() {
       break;
     }
     index++;
+    Serial.println(index);
 }
 
 // *** Functions to be distributed inside the multiple bands *** //
@@ -198,12 +206,12 @@ int timer_state_prev = 0;
 void state_machine(){
   
   timer_state = millis();
-  if (alarm == DISCONNECT){
+  /*if (alarm == DISCONNECT){
     current_state = STOP; 
     // IF BUTTON PRESS, INSPIRATION
-  }
+  }*/
   // INSPIRATION --> EXPIRATION
-  else if (current_state == INSPIRATION &&  (timer_state - timer_state_prev) >= time_inspi*1000 ){
+  if (current_state == INSPIRATION &&  (timer_state - timer_state_prev) >= time_inspi*1000 ){
     current_state = EXPIRATION;
     timer_state_prev = timer_state;
     }
@@ -341,8 +349,8 @@ float FiO2_const = 0;
 // Functions //
 // Calibration via the values inside the array //
 void FiO2_cal(){
-  FiO2_slope = (FiO2_cal_array[1] - FiO2_cal_array[0])/ (FiO2_percent[1]-FiO2_percent[1]);
-  FiO2_const = FiO2_cal_array[0] - FiO2_slope*FiO2_percent[0];
+  FiO2_slope = (FiO2_percent[1]-FiO2_percent[0]) / (FiO2_cal_array[1] - FiO2_cal_array[0]) ;
+  FiO2_const = FiO2_percent[0] - FiO2_slope*FiO2_cal_array[0];
 }
 
 // Detecting FiO2 //
@@ -357,14 +365,22 @@ void FiO2_sense(){
 // Variables //
 // No local variables needed
 // 
-void valve_control(){
+void valve_expiration(){
   if (current_state == INSPIRATION ){
-    digitalWrite(valve_pin,HIGH);
+    digitalWrite(valve_expi,HIGH);
   }
   else{
-    digitalWrite(valve_pin,LOW);
+    digitalWrite(valve_expi,LOW);
   }
 }
+void valve_pneumatic(){
+  if (current_state == INSPIRATION ){
+    digitalWrite(valve_pneu,LOW);
+  }
+  else{
+    digitalWrite(valve_pneu,HIGH);
+  }
+}  
 
 // * Read Pressure sensor BME* //
 // Variables //
@@ -421,23 +437,28 @@ void pressure_sensor_read(){
     pressure_sensor.send();
     pressure_sensor.read();
     pressure = pressure_sensor.get_pressure();
+    //Serial.println(pressure);
 }
 void calc_display_pressure(){
-  if (current_state == prev_state_pressure && current_state == INSPIRATION){ // DIsplay mean pressure inside the lung
+  if ((current_state == prev_state_pressure) && (current_state == INSPIRATION)){ // DIsplay mean pressure inside the lung
       measured_pressure = max(measured_pressure, pressure);
+      Serial.print("1");
   }
   if (current_state == prev_state_pressure && current_state == EXPIRATION){ // DIsplay mean pressure inside the lung
       measured_pressure = min(measured_pressure, pressure);
+      Serial.print("2");
   }
   else if(current_state == EXPIRATION && prev_state_pressure == INSPIRATION){
      measured_pressure_inspi = (int) (Pa_2_cmH2O * measured_pressure);
      // Reset mean and counters
      measured_pressure = pressure;
+     Serial.print("3");
   }
   else if(current_state == INSPIRATION && prev_state_pressure == EXPIRATION){
    measured_pressure_expi = (int) (Pa_2_cmH2O *  measured_pressure); // Convert Pa to cm H2O
    // Reset mean and counters
    measured_pressure = pressure;
+    Serial.print("4");
   }
   prev_state_pressure = current_state;
 }
@@ -481,7 +502,7 @@ void setup_lcd(){
       lcd_menu.lcd_run();
       lcd_menu.read_LCD_buttons();
       lcd_menu.lcd_run();
-      input_tidal_volume = lcd_menu.get_TidalVolume_cmd(); //Objectif de tidal volume
+      input_tidal_volume = lcd_menu.get_TidalVolume_cmd()*10; //Objectif de tidal volume (ml)
       high_pressure = cmH2O_2_Pa * lcd_menu.get_InspiPressure_cmd(); // Peak pressure
       resp_per_minute = lcd_menu.get_RespiratoryRate_cmd();
       ie_ratio = ((float) lcd_menu.get_IERatio_cmd())/10;
@@ -511,13 +532,14 @@ void setup_lcd(){
      lcd_menu.lcd_run();
    }   
  }
-/*
+
 // * Venturi Flowmeter * //
 // Variables //
 float venturi_speed = 0;
 float venturi_pressure = 0;
 float venturi_flow = 0;
-float venturi_small_radi = 0.00635; 
+float venturi_small_radi = 0.00535; 
+//float venturi_normal_radi = 0.0127;
 float venturi_normal_radi = 0.0127;
 
 float venturi_volume = 0;
@@ -535,14 +557,10 @@ void venturi_measure(){
   venturi_sensor.send();
   venturi_sensor.read();
   venturi_pressure = venturi_sensor.get_pressure();
-  dummy = abs(2*venturi_pressure/(density*(1-pow(venturi_normal_section,2)/pow(venturi_small_section,2))));
-  venturi_speed = sqrt(dummy);
-  venturi_flow = venturi_speed * pow(venturi_normal_radi,2) * pi;
+  venturi_speed = sqrt(abs(2*venturi_pressure/(density*(1-pow(venturi_normal_section,2)/pow(venturi_small_section,2)))));
+  venturi_flow = venturi_speed * venturi_normal_section;
   //Serial.print("venturi: ");
   //Serial.println(venturi_pressure);
-  //Serial.print("venturi_flow: ");
-  //Serial.println(dummy);
-  Serial.println(venturi_speed);
  }
 void venturi_TidalVolume(){
   venturi_time = millis();
@@ -556,4 +574,3 @@ void venturi_TidalVolume(){
   current_state = venturi_prev_state;
   venturi_time_prev = venturi_time;
 }
-*/
