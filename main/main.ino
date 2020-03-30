@@ -36,6 +36,10 @@
 #define psensor2 0x28 // Pressure sensor
 #define psensor3 0x28 // Calibration sensor
 
+// ** Calibration ** //
+float FiO2_percent[2] = {21,  100} ;
+float FiO2_cal_array[2] ={126, 617}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
+
 // *** Doctor variables *** //
 int resp_per_minute = 30; // cycles/minute
 float ie_ratio = 0.3; // %
@@ -121,6 +125,7 @@ void band1_0() {
   venturi_measure();
   valve_pneumatic();
   valve_expiration();
+  Serial.println(resp_per_minute);
 }
 // Mid priority functions part 1
 void band2_0() {
@@ -158,7 +163,7 @@ void setup() {
   setup_lcd();
   bme280_setup();
   Serial.println("2");
-  pinMode(buzzer_pin, OUTPUT); // Set buzzer
+  setup_sound();
   venturi_sensor.calibrate();
   //pressure_sensor2.calibrate();
   pinMode(valve_pneu,OUTPUT);
@@ -328,6 +333,10 @@ void check_FiO2(){
 // * SOUND TONES * //
 // Variables //
 int sound_index = 0;
+void setup_sound(){
+  pinMode(buzzer_pin, OUTPUT); // Set buzzer
+  Serial.println("Buzzer pin is Ready");
+  }
 // Function //
 void sound(){
   if(alarm == NO_ALARM){
@@ -343,13 +352,12 @@ void sound(){
 // Variables //
 float FiO2_raw[3] = {20,20,20}; // Initialize at atmospehre % to evade alarms
 int FiO2_index = 0;
-float FiO2_percent[2] = {21,  100} ;
-float FiO2_cal_array[2] ={126, 617}; // [0-1024 scale] calibration values for the FiO2 sensor (after op-amp) 
 float FiO2_slope = 0;
 float FiO2_const = 0;
 // Functions //
 // Calibration via the values inside the array //
 void FiO2_cal(){
+  Serial.print("Using calibration array values for data setup");
   FiO2_slope = (FiO2_percent[1]-FiO2_percent[0]) / (FiO2_cal_array[1] - FiO2_cal_array[0]) ;
   FiO2_const = FiO2_percent[0] - FiO2_slope*FiO2_cal_array[0];
 }
@@ -434,6 +442,12 @@ void bme280_getdata(){
 int prev_state_pressure = current_state;
 float measured_pressure = 0;
 int nb_data_inspi = 0;
+//  Setup  //
+void pressure_sensor_setup(){
+  Serial.println("Starting pressure offset calibration");
+  pressure_sensor.calibrate();
+  Serial.println("Finished calibrating pressure sensor");
+  }
 // Function //
 void pressure_sensor_read(){
     pressure_sensor.send();
@@ -552,6 +566,11 @@ float venturi_small_section = pi*pow(venturi_small_radi,2);
 float venturi_normal_section = pi*pow(venturi_normal_radi,2); 
 
 // Setup // 
+void setup_venturi(){
+  Serial.print("Starting venturi offset calibration");
+  venturi_sensor.calibrate();
+  Serial.print("Starting venturi offset calibration");
+  }
 // Calculate // 
 void venturi_measure(){
   venturi_sensor.send();
@@ -564,10 +583,10 @@ void venturi_measure(){
   //venturi_speed = sqrt(abs(3.9634 * mean_venturi_data - 32454));
   venturi_flow = venturi_speed * venturi_normal_section;
   venturi_index++;
-  Serial.print("venturi data: ");
-  Serial.println(mean_venturi_data);
-  Serial.print("venturi: ");
-  Serial.println(venturi_speed);
+  //Serial.print("venturi data: ");
+  //Serial.println(mean_venturi_data);
+  //Serial.print("venturi: ");
+  //Serial.println(venturi_speed);
  }
 void venturi_TidalVolume(){
   venturi_time = millis();
