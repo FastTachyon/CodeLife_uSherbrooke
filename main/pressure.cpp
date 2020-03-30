@@ -78,8 +78,10 @@ int Pressure_gauge::read()
              }
   
   
-            pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
-            pressure = pressure - offset_pressure;  
+            //pressure = 1.0 * (bridge_data - OUTPUT_MIN) * (PRESSURE_MAX - PRESSURE_MIN) / (OUTPUT_MAX - OUTPUT_MIN) + PRESSURE_MIN;
+            pressure = 1.0 * (bridge_data - 8194) * (-1863 - 0) / (7850 - 8194) + 0;
+            //pressure = bridge_data;
+            //pressure = pressure - offset_pressure;  
             temperature = (temperature_data * 0.0977) - 50;
         return status1; 
         }
