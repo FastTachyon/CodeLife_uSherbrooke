@@ -11,7 +11,7 @@ int stepperPosition = 0;
 #ifdef PNEUMATIC
 
 int finDeCourse = 36;
-double dts[5];
+double dts[10];
 int distributeur_pneu = 51; 
 int valve_expi = 50; 
 /* v
@@ -64,6 +64,64 @@ void Calibrate_motor(){
  */
  
 void speedControl(double tempsInspi){
+    double y1;
+    double y2;
+    int x1;
+    int x2;
+    if(tempsInspi > dts[1]){
+        y1 = dts[0];
+        y2 = dts[1];
+        x1 = 1;
+        x2 = 2;
+    } else if(tempsInspi > dts[2]){
+        y1 = dts[1];
+        y2 = dts[2];
+        x1 = 2;
+        x2 = 3;
+    } else if(tempsInspi > dts[3]){
+        y1 = dts[2];
+        y2 = dts[3];
+        x1 = 3;
+        x2 = 4;
+    } else if(tempsInspi > dts[4]){
+        y1 = dts[3];
+        y2 = dts[4];
+        x1 = 4;
+        x2 = 5;
+    } else if(tempsInspi > dts[5]){
+        y1 = dts[4];
+        y2 = dts[5];
+        x1 = 5;
+        x2 = 6;
+    } else if(tempsInspi > dts[6]){
+        y1 = dts[5];
+        y2 = dts[6];
+        x1 = 6;
+        x2 = 7;
+    } else if(tempsInspi > dts[7]){
+        y1 = dts[6];
+        y2 = dts[7];
+        x1 = 7;
+        x2 = 8;
+    } else if(tempsInspi > dts[8]){
+        y1 = dts[7];
+        y2 = dts[8];
+        x1 = 8;
+        x2 = 9;
+    } else{
+        y1 = dts[8];
+        y2 = dts[9];
+        x1 = 9;
+        x2 = 10;
+    }
+    double a = (y2 -y1) / (x2 - x1);
+    double b = y1 - a * x1;
+    double nbTours = (y - b) / a;
+    if (nbTours < 0){
+        nbTours = 0.1;
+    }
+    int positionTarget = int(nbTours * STEPS_PER_REV);
+    stepper_NEMA17.step(stepperPosition - positionTarget);
 }
 
 /*
