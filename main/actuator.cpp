@@ -5,25 +5,44 @@
 #include "actuator.h"
 
 #ifdef PNEUMATIC
+uint8_t finDeCourse = 22;
+pinMode(finDeCourse, INPUT_PULLUP);
+double dts[5];
 /*
-#include <Servo.h>
+ * This function calibrate the piston's speed
+ */
+void Calibrate(){
+    stepper_NEMA17.setspeed(STEPPER_MAX_SPEED);
+    for(int i = 0; i < 5; i++){
+        double temps0 = millis();
+        actuatorInhale();
+        while(digitalRead(finDeCourse));
+        double temps1 = millis();
+        actuatorExhale();
+        dt = (temps1 - temps0)/1000;
+        dts[i] = dt;
+        if (i < 4) stepper_NEMA17.step(2 * STEPS_PER_REV);
+        delay(500);
+        Serial.println(dt);
+        }
 
-Servo flowControl;
-int servoPin = 9;
+    }
+    // fait 5 fois:
+    // fait 2 tours
+    // part un timer
+    // sort le piston jusqu'à la limit switch
+    // trouve dt
+    // affiche dt
 
-flowControl.attach(servoPin);
-*/
+}
+
 /*
  * This function modulate the inhale flow
  * input : inhale flow value ml/sec
  * output: modulation
  */
  
-void speedControl(double flow){
-    // calcul du flow d'air en fcn du flow demandé
-    // map du flow pour le modulateur de débit
-    int angle; //(0-180)
-//    flowControl.write(angle);
+void speedControl(double tempsInspi){
 }
 
 /*
@@ -52,14 +71,6 @@ void actuatorExhale(){
 #endif //PNEUMATIC
 
 #ifdef MECANIC
-#include <Stepper.h>
-
-const int STEPS_PER_REV = 200;
-
-Stepper stepper_NEMA17(STEPS_PER_REV, 8, 9, 10, 11);
-
-const int STEPPER_MAX_SPEED = 200;
-
 /*
  * This function modulate the inhale flow
  * input : inhale flow value ml/sec
