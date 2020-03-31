@@ -220,10 +220,10 @@ void state_machine(){
     }
   
    // Assisted ventilation mode switch (TBD)
-   else if (pressure < low_pressure && current_state == EXPIRATION){
-      current_state = INSPIRATION;
-      timer_state_prev = timer_state;
-   }
+  // else if (pressure < low_pressure && current_state == EXPIRATION){
+  //    current_state = INSPIRATION;
+  //    timer_state_prev = timer_state;
+  // }
    //else if (pressure > high_pressure && mode == assisted){
    //current_state = !current_state
    //timer_state_prev = millis();
@@ -375,7 +375,7 @@ void valve_expiration(){
   }
 }
 void valve_pneumatic(){
-  if (current_state == INSPIRATION || (pressure < high_pressure) ){
+  if (current_state == INSPIRATION && (pressure < high_pressure) ){
     digitalWrite(valve_pneu,LOW);
   }
   else if(current_state = EXPIRATION ){
@@ -575,13 +575,14 @@ void venturi_measure(){
   venturi_pressure[mod(venturi_index,5)] = venturi_sensor.get_pressure();
   mean_venturi_data = mean_float(&venturi_pressure[0],5);
   // Removing noisy background for almost 0 speed
-  if (abs(mean_venturi_data) < 20.0){ // If above noise volume
-    mean_venturi_data = 0;
-  } 
+  //if (abs(mean_venturi_data) < 20.0){ // If above noise volume
+   // mean_venturi_data = 0;
+  //} 
   //Derivating speed from the pressure sensor (theorical approach)
   venturi_speed = sqrt(abs(2*mean_venturi_data/(density*(1-pow(venturi_normal_section,2)/pow(venturi_small_section,2)))));
   venturi_flow = venturi_speed * venturi_normal_section;
   venturi_index++;
+  Serial.println(mean_venturi_data);
  }
 
 // Integrating the flow by the time taken for an inspiration
