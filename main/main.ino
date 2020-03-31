@@ -27,9 +27,9 @@
 // * Physical pins needed * //
 #define buzzer_pin 43
 #define FiO2_pin A7
+#define limitswitch_pin 26
 #define valve_pneu 51
 #define valve_expi 47
-#define limitswitch_pin 26
 
 // * I2C BUS * //
 #define SERIAL_BAUD 115200
@@ -47,7 +47,6 @@ float ie_ratio = 0.3; // %
 int hp_pressure_h20 = 21; // cmH2O
 int tidal_volume = 410; // ml
 int FiO2_target = 30;  // % 
-
 
 // *** Measure *** //
 float freq_cycle = resp_per_minute / 60.0;
@@ -161,13 +160,12 @@ void setup() {
   Wire.begin();
   Serial.println("Started");
   // Setting up the individual functionalities
+  Calibrate_motor();
   setup_lcd(); // Setting up the LCD
   bme280_setup(); // Calibrating the BME280  
   Serial.println("2");
   setup_sound(); // Setting up te sound 
   venturi_sensor.calibrate(); // Calibrating the venturi 
-  pinMode(valve_pneu,OUTPUT); // 
-  pinMode(valve_expi,OUTPUT); //
   FiO2_cal(); // Calibrating the FiO2
   
   // Initialisation Timer

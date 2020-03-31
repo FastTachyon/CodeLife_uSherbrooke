@@ -40,6 +40,6 @@ void actuatorExhale();
 /*
  * This function calibrate the piston's speed
  */
-void Calibrate();
+void Calibrate_motor();
 
 #endif //CODELIFE_USHERBROOKE_ACTUATOR_H
