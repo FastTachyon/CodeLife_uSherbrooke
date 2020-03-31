@@ -76,13 +76,7 @@ int timer_init = 0;
 int timer_current = 0;
 int timer_prev = 0;
 
-// Frequency of the code
-float frequency = 60; // [hz]
-float period = 1/frequency * 1000; // [ms]
-
 Pressure_gauge venturi_sensor(psensor1);
-Pressure_gauge pressure_sensor(psensor2);
-Pressure_gauge pressure_sensor3(psensor3);
 
 Lcd_menu lcd_menu; 
 
@@ -125,7 +119,7 @@ void band1_0() {
   venturi_measure(); // Read the differential sensor
   valve_pneumatic(); // Activate pneumatic valve
   valve_expiration(); // Activate actuated valve
-  Serial.println(current_state);
+  //Serial.println(current_state);
 }
 // Mid priority functions part 1
 void band2_0() {
@@ -170,7 +164,7 @@ void setup() {
   
   // Initialisation Timer
   timer_init = millis();
-  Serial.print("started");
+  Serial.println("Ventilation started");
 }
 
 void loop() {
@@ -441,6 +435,7 @@ int prev_state_pressure = current_state;
 float measured_pressure = 0;
 int nb_data_inspi = 0;
 //  Setup  //
+/*
 void pressure_sensor_setup(){
   Serial.println("Starting pressure offset calibration");
   pressure_sensor.calibrate();
@@ -453,6 +448,7 @@ void pressure_sensor_read(){
     pressure = pressure_sensor.get_pressure();
     //Serial.println(pressure);
 }
+*/
 void calc_display_pressure(){
   if ((current_state == prev_state_pressure) && (current_state == INSPIRATION)){ // DIsplay mean pressure inside the lung
       measured_pressure = max(measured_pressure, pressure);
@@ -517,12 +513,10 @@ void setup_lcd(){
       resp_per_minute = lcd_menu.get_RespiratoryRate_cmd();
       ie_ratio = 1/(1+lcd_menu.get_IERatio_cmd());
       FiO2_set = lcd_menu.get_FiO2Target_cmd();
-      Serial.println(resp_per_minute);
-      Serial.println(ie_ratio);
 
-        freq_cycle = resp_per_minute / 60.0;
-        time_expi = ie_ratio / freq_cycle;
-        time_inspi = (1-ie_ratio) / freq_cycle;
+      freq_cycle = resp_per_minute / 60.0;
+      time_expi = ie_ratio / freq_cycle;
+      time_inspi = (1-ie_ratio) / freq_cycle;
    }
 }
  void refresh_lcd(){

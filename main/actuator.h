@@ -7,10 +7,7 @@
 
 #include <Stepper.h>
 
-const int STEPS_PER_REV = 200;
-Stepper stepper_NEMA17(STEPS_PER_REV, 22, 23, 24, 25);
-const int STEPPER_MAX_SPEED = 200;
-int stepperPosition = 0;
+
 
 #define PNEUMATIC
 //#define MECANIC
