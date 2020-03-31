@@ -41,18 +41,20 @@ class Lcd_menu
         void setStateMachine(int state);
 
         //Récupérer les variables de controles
-        int get_TidalVolume_cmd();
-        int get_InspiPressure_cmd();
-        int get_RespiratoryRate_cmd();
-        int get_IERatio_cmd();
-        int get_FiO2Target_cmd();
+        float get_cmd_value(int cmd_);
+        float get_TidalVolume_cmd();
+        float get_InspiPressure_cmd();
+        float get_RespiratoryRate_cmd();
+        float get_IERatio_cmd();
+        float get_FiO2Target_cmd();
 
         //Mettre les valeurs par défauts des variables de controles
-        void  set_TidalVolume_cmd(int volume);
-        void  set_InspiPressure_cmd(int pressure);
-        void  set_RespiratoryRate_cmd(int rate);
-        void  set_IERatio_cmd(int ratio); 
-        void  set_FiO2Target_cmd(int target);
+        void  set_cmd_value(int cmd, float value);
+        void  set_TidalVolume_cmd(float volume);
+        void  set_InspiPressure_cmd(float pressure);
+        void  set_RespiratoryRate_cmd(float rate);
+        void  set_IERatio_cmd(float ratio); 
+        void  set_FiO2Target_cmd(float target);
 
         //Informer le lcd sur les informations à afficher
         void set_TidalVolume_reading(int volume);
@@ -89,10 +91,10 @@ class Lcd_menu
         int out_peep_pressure;
         int out_fio2;
       
-        bool on_off;
+        bool on_off=false;
 
 
-        void  set_cmd_value(int cmd, int value);
+
         
         //Alarm and mode
         String alarm_name[10]={""};
@@ -107,11 +109,7 @@ class Lcd_menu
         Screen display;
 
         //config
-        int config_list;
-        int config_value[NB_CONFIG];
         Config config[NB_CONFIG];
-
-        void config_parser(int index);
 
         //Security
          int passcode[4]={0,0,0,0};
@@ -123,7 +121,6 @@ class Lcd_menu
 
         /********************************UTILITAIRE**********************************/
         String intToChar(int number, int nb_digit); 
-        int min0max100(int number);
         int minMax(int value, int min_value, int max_value);
         
      

@@ -13,6 +13,7 @@
 #define INSPIRATION 1
 #define EXPIRATION 2
 #define STOP 3
+#define CALIBRATION 4
 
 // * ALARMS * //
 // Associated variable: alarm
@@ -31,7 +32,7 @@
 #define limitswitch_pin 26
 
 // * I2C BUS * //
-#define SERIAL_BAUD 9600
+#define SERIAL_BAUD 115200
 #define psensor1 0x28 // Venturi flow sensor
 #define psensor2 0x28 // Pressure sensor
 #define psensor3 0x28 // Calibration sensor
@@ -50,8 +51,8 @@ int FiO2_target = 30;  // %
 
 // *** Measure *** //
 float freq_cycle = resp_per_minute / 60.0;
-float time_inspi = ie_ratio / freq_cycle;
-float time_expi = (1-ie_ratio) / freq_cycle;
+float time_expi = ie_ratio / freq_cycle;
+float time_inspi = (1-ie_ratio) / freq_cycle;
 float atm = 100000;
 
 // *** Variables *** //
@@ -115,33 +116,34 @@ int mean_int(int *arr, int SizeOfArray ){
 // High priority functions
 void band1_0() {
   state_machine(); // Cycle and time management
-  FiO2_sense();
-  check_FiO2();
-  check_disconnect(); 
-  check_HP();
-  check_LP();
+  FiO2_sense(); // Sensing FiO2 of the air inside the system
+  check_FiO2(); // Alarm if the FiO2 is over the alarm or not
+  check_disconnect(); // Alarm for a disconnection of the system
+  check_HP(); // Alarm for high pressure
+  check_LP(); // Alarm for low pressure
   //pressure_sensor_read2();
-  bme280_getdata();
-  venturi_measure();
-  valve_pneumatic();
-  valve_expiration();
-  Serial.println(resp_per_minute);
+  bme280_getdata(); // Read the BME280 sensor
+  venturi_measure(); // Read the differential sensor
+  valve_pneumatic(); // Activate pneumatic valve
+  valve_expiration(); // Activate actuated valve
+  Serial.println(current_state);
 }
 // Mid priority functions part 1
 void band2_0() {
-  get_lcd();
+  get_lcd(); // Get data fed by the LCD
 }
 // Mid priority functions part 2
 void band2_1() {
-  sound();
+  sound(); // Trigger the tones made by the sensor
+  venturi_TidalVolume(); // Calculate the Tidal volume from the delta P
 }
 // Low priority functions part 1
 void band3_0() {
-  refresh_lcd();
+  refresh_lcd(); // Update LCD readout with the newest measurements
 }
 // Low priority functions part 2
 void band3_1() {
-  calc_display_pressure();
+  calc_display_pressure(); // Calculate the display pressure 
 }
 // Low priority functions part 3
 void band3_2() {
@@ -159,17 +161,15 @@ void setup() {
   Wire.begin();
   Serial.println("Started");
   // Setting up the individual functionalities
-  Serial.println("1");
-  setup_lcd();
-  bme280_setup();
+  setup_lcd(); // Setting up the LCD
+  bme280_setup(); // Calibrating the BME280  
   Serial.println("2");
-  setup_sound();
-  venturi_sensor.calibrate();
-  //pressure_sensor2.calibrate();
-  pinMode(valve_pneu,OUTPUT);
-  pinMode(valve_expi,OUTPUT);
-  FiO2_cal();
-  Serial.println("3");
+  setup_sound(); // Setting up te sound 
+  venturi_sensor.calibrate(); // Calibrating the venturi 
+  pinMode(valve_pneu,OUTPUT); // 
+  pinMode(valve_expi,OUTPUT); //
+  FiO2_cal(); // Calibrating the FiO2
+  
   // Initialisation Timer
   timer_init = millis();
   Serial.print("started");
@@ -228,10 +228,10 @@ void state_machine(){
     }
   
    // Assisted ventilation mode switch (TBD)
-   //else if (pressure < low_pressure && mode == assisted){
-   //current_state = !current_state
-   //timer_state_prev = millis();
-   //}
+   else if (pressure < low_pressure && current_state == EXPIRATION){
+      current_state = INSPIRATION;
+      timer_state_prev = timer_state;
+   }
    //else if (pressure > high_pressure && mode == assisted){
    //current_state = !current_state
    //timer_state_prev = millis();
@@ -517,9 +517,14 @@ void setup_lcd(){
       input_tidal_volume = lcd_menu.get_TidalVolume_cmd()*10; //Objectif de tidal volume (ml)
       high_pressure = cmH2O_2_Pa * lcd_menu.get_InspiPressure_cmd(); // Peak pressure
       resp_per_minute = lcd_menu.get_RespiratoryRate_cmd();
-      ie_ratio = ((float) lcd_menu.get_IERatio_cmd())/10;
+      ie_ratio = 1/(1+lcd_menu.get_IERatio_cmd());
       FiO2_set = lcd_menu.get_FiO2Target_cmd();
-     
+      Serial.println(resp_per_minute);
+      Serial.println(ie_ratio);
+
+        freq_cycle = resp_per_minute / 60.0;
+        time_expi = ie_ratio / freq_cycle;
+        time_inspi = (1-ie_ratio) / freq_cycle;
    }
 }
  void refresh_lcd(){
@@ -548,7 +553,7 @@ void setup_lcd(){
 // * Venturi Flowmeter * //
 // Variables //
 float venturi_speed = 0;
-float venturi_pressure[3] = {0,0,0};
+float venturi_pressure[5] = {0,0,0};
 float venturi_flow = 0;
 float venturi_small_radi = 0.00535; 
 //float venturi_normal_radi = 0.0127;
@@ -575,28 +580,29 @@ void setup_venturi(){
 void venturi_measure(){
   venturi_sensor.send();
   venturi_sensor.read();
-  venturi_pressure[mod(venturi_index,3)] = venturi_sensor.get_pressure();
-  mean_venturi_data = mean_float(&venturi_pressure[0],3);
+  venturi_pressure[mod(venturi_index,5)] = venturi_sensor.get_pressure();
+  mean_venturi_data = mean_float(&venturi_pressure[0],5);
+  // Removing noisy background for almost 0 speed
+  if (abs(mean_venturi_data) < 20.0){ // If above noise volume
+    mean_venturi_data = 0;
+  } 
   //Derivating speed from the pressure sensor (theorical approach)
-   venturi_speed = sqrt(abs(2*mean_venturi_data/(density*(1-pow(venturi_normal_section,2)/pow(venturi_small_section,2)))));
-  // Derivating speed empirically (Using relationship found via fitting)
-  //venturi_speed = sqrt(abs(3.9634 * mean_venturi_data - 32454));
+  venturi_speed = sqrt(abs(2*mean_venturi_data/(density*(1-pow(venturi_normal_section,2)/pow(venturi_small_section,2)))));
   venturi_flow = venturi_speed * venturi_normal_section;
   venturi_index++;
-  //Serial.print("venturi data: ");
-  //Serial.println(mean_venturi_data);
-  //Serial.print("venturi: ");
-  //Serial.println(venturi_speed);
  }
+
+// Integrating the flow by the time taken for an inspiration
 void venturi_TidalVolume(){
   venturi_time = millis();
-  if (current_state == INSPIRATION){
+  if (current_state == EXPIRATION){
     venturi_volume = venturi_volume + venturi_flow*(venturi_time-venturi_time_prev)/1000;
   }
   else if (current_state != venturi_prev_state){
-    venturi_volume = venturi_volume_prev;
+    venturi_volume_prev = venturi_volume;
+    measured_tidal_volume = venturi_volume;
     venturi_volume=0;
   }
-  current_state = venturi_prev_state;
+  venturi_prev_state = current_state;
   venturi_time_prev = venturi_time;
 }
