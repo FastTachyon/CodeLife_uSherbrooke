@@ -22,25 +22,28 @@ void Calibrate_meca();
 #endif
 
 /*
- * This function modulate the inhale flow
- * input : inhale flow value ml/sec
- * output: modulation
+ * This function activate the driver for the stepper motor
  */
-void speedControl(double);
+void enableStepper();
 
 /*
- * This function activate the actuator to push air
+ * This function disable the driver for the stepper motor
  */
-void actuatorInhale();
+void disableStepper();
+
+/*
+ * This function modulate the actuator speed during inhale
+ * input : inspiration time
+ * output: modulation
+ */
+
+void speedControl(double);
+
 
 /*
  * This function stop the airflow
  */
 void actuatorStop();
 
-/*
- * This function activate the actuator in the opposite direction at full speed
- */
-void actuatorExhale();
 
 #endif //CODELIFE_USHERBROOKE_ACTUATOR_H

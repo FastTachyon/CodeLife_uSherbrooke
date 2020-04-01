@@ -3,71 +3,74 @@
 #include <Arduino.h>
 #include "actuator.h"
 
-const int STEPS_PER_REV = 200;
-Stepper stepper_NEMA17(STEPS_PER_REV, 22, 23, 24, 25);
-const int STEPPER_MAX_SPEED = 200;
-int stepperPosition = 0;
+const int STEPS_PER_REV = 200;                          // number of steps per revolution for the nema 17 stepper
+Stepper stepper_NEMA17(STEPS_PER_REV, 22, 23, 24, 25);  // stepper definition
+const int STEPPER_MAX_SPEED = 200;                      // max rpm for the nema 17
+int stepperPosition = 0;                                // init stepper position
 
+/*
+ * This function activate the driver for the stepper motor
+ */
 void enableStepper(){
   digitalWrite(34, LOW);  
 }
+
+/*
+ * This function disable the driver for the stepper motor
+ */
 void disableStepper(){
   digitalWrite(34, HIGH);  
 }
 
 #ifdef PNEUMATIC
 
-int finDeCourse = 36;
-double dts[10];
-int distributeur_pneu = 51; 
+int finDeCourse = 36;   // limit switch PIN
+double dts[10];         // delta time list for calibration
+int distributeur_pneu = 51;
 int valve_expi = 50; 
-/* v
+
+/*
  * This function calibrate the piston's speed
  */
-void Calibrate_pneu(){
+void Calibrate_pneu() {
     pinMode(34, OUTPUT);
-    pinMode(distributeur_pneu,OUTPUT); // 
-    pinMode(valve_expi,OUTPUT); //
+    pinMode(distributeur_pneu, OUTPUT); //
+    pinMode(valve_expi, OUTPUT); //
     pinMode(finDeCourse, INPUT_PULLUP);
     enableStepper();
     stepper_NEMA17.setSpeed(STEPPER_MAX_SPEED);
-    digitalWrite(distributeur_pneu,LOW);
-    digitalWrite(valve_expi,HIGH);
+    digitalWrite(distributeur_pneu, LOW);
+    digitalWrite(valve_expi, HIGH);
     delay(1000);
-    for(int i = 0; i < 10; i++){
+    for (int i = 0; i < 10; i++) {
         stepper_NEMA17.step(-1 * STEPS_PER_REV);
         double temps0 = millis();
-        digitalWrite(distributeur_pneu,HIGH);
-        digitalWrite(valve_expi,LOW);
+        digitalWrite(distributeur_pneu, HIGH);
+        digitalWrite(valve_expi, LOW);
         Serial.print("Start course ");
         Serial.println(digitalRead(finDeCourse));
         bool enCourse = digitalRead(finDeCourse);
-        while(enCourse){
-          enCourse = digitalRead(finDeCourse);
-          delay(10);
+        while (enCourse) {
+            enCourse = digitalRead(finDeCourse);
+            delay(10);
         }
-          Serial.println("End course");
-          double temps1 = millis();
-          digitalWrite(distributeur_pneu,LOW);
-          digitalWrite(valve_expi,HIGH);
-          double dt = (temps1 - temps0)/1000;
-          dts[i] = dt;
-          delay(500);
-          Serial.print("delta temps: ");
-          Serial.println(dt);
-        }
-        disableStepper();
-        stepperPosition = 10 *  STEPS_PER_REV;
-    // fait 5 fois:
-    // fait 2 tours
-    // part un timer
-    // sort le piston jusqu'à la limit switch
-    // trouve dt
-    // affiche dt
+        Serial.println("End course");
+        double temps1 = millis();
+        digitalWrite(distributeur_pneu, LOW);
+        digitalWrite(valve_expi, HIGH);
+        double dt = (temps1 - temps0) / 1000;
+        dts[i] = dt;
+        delay(500);
+        Serial.print("delta temps: ");
+        Serial.println(dt);
+    }
+    disableStepper();
+    stepperPosition = 10 * STEPS_PER_REV;
 }
+
 /*
- * This function modulate the inhale flow
- * input : inhale flow value ml/sec
+ * This function modulate the piston speed during inhale
+ * input : inspiration time
  * output: modulation
  */
  
@@ -137,40 +140,25 @@ void speedControl(double tempsInspi){
 }
 
 /*
- * This function activate the actuator to push air
- */
-/*
  * This function stop the airflow
  */
 void actuatorStop(){
     actuatorExhale();
 }
 
-/*
- * This function activate the actuator in the opposite direction at full speed
- */
-
 #endif //PNEUMATIC
 
 #ifdef MECANIC
+
 /*
- * This function modulate the inhale flow
- * input : inhale flow value ml/sec
+ * This function modulate the stepper speed during inhale
+ * input : inspiration time
  * output: modulation
  */
-void speedControl(double flow){
-    // calcul du rpm en fcn du flow demandé
 
-    stepper_NEMA17.setSpeed(motorSpeed);
-
+void speedControl(double tempsInspi){
 }
 
-/*
- * This function activate the actuator to push air
- */
-void actuatorInhale(){
-    stepper_NEMA17.step(2);
-}
 
 /*
  * This function stop the airflow
@@ -179,12 +167,6 @@ void actuatorStop(){
     return;
 }
 
-/*
- * This function activate the actuator in the opposite direction at full speed
- */
-void actuatorExhale(){
-    stepper_NEMA17.setSpeed(-STEPPER_MAX_SPEED);
-    stepper_NEMA17.step(2);
-}
+
 
 #endif //MECANIC
