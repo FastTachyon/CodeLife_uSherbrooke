@@ -8,6 +8,13 @@ Stepper stepper_NEMA17(STEPS_PER_REV, 22, 23, 24, 25);
 const int STEPPER_MAX_SPEED = 200;
 int stepperPosition = 0;
 
+void enableStepper(){
+  digitalWrite(34, LOW);  
+}
+void disableStepper(){
+  digitalWrite(34, HIGH);  
+}
+
 #ifdef PNEUMATIC
 
 int finDeCourse = 36;
@@ -17,12 +24,12 @@ int valve_expi = 50;
 /* v
  * This function calibrate the piston's speed
  */
-void Calibrate_motor(){
+void Calibrate_pneu(){
     pinMode(34, OUTPUT);
     pinMode(distributeur_pneu,OUTPUT); // 
     pinMode(valve_expi,OUTPUT); //
     pinMode(finDeCourse, INPUT_PULLUP);
-    digitalWrite(34, HIGH);
+    enableStepper();
     stepper_NEMA17.setSpeed(STEPPER_MAX_SPEED);
     digitalWrite(distributeur_pneu,LOW);
     digitalWrite(valve_expi,HIGH);
@@ -49,7 +56,8 @@ void Calibrate_motor(){
           Serial.print("delta temps: ");
           Serial.println(dt);
         }
-        digitalWrite(34, LOW);
+        disableStepper();
+        stepperPosition = 10 *  STEPS_PER_REV;
     // fait 5 fois:
     // fait 2 tours
     // part un timer
@@ -64,6 +72,7 @@ void Calibrate_motor(){
  */
  
 void speedControl(double tempsInspi){
+    tempsInspi *= 0.9;
     double y1;
     double y2;
     int x1;
@@ -116,12 +125,15 @@ void speedControl(double tempsInspi){
     }
     double a = (y2 -y1) / (x2 - x1);
     double b = y1 - a * x1;
-    double nbTours = (y - b) / a;
+    double nbTours = (tempsInspi - b) / a;
     if (nbTours < 0){
         nbTours = 0.1;
     }
     int positionTarget = int(nbTours * STEPS_PER_REV);
+    enableStepper();
     stepper_NEMA17.step(stepperPosition - positionTarget);
+    stepperPosition = positionTarget;
+    disableStepper();
 }
 
 /*

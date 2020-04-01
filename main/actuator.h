@@ -12,6 +12,15 @@
 #define PNEUMATIC
 //#define MECANIC
 
+#ifdef PNEUMATIC
+/*
+ * This function calibrate the piston's speed
+ */
+void Calibrate_pneu();
+#elif def MECANIC
+void Calibrate_meca();
+#endif
+
 /*
  * This function modulate the inhale flow
  * input : inhale flow value ml/sec
@@ -33,10 +42,5 @@ void actuatorStop();
  * This function activate the actuator in the opposite direction at full speed
  */
 void actuatorExhale();
-
-/*
- * This function calibrate the piston's speed
- */
-void Calibrate_motor();
 
 #endif //CODELIFE_USHERBROOKE_ACTUATOR_H
