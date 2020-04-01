@@ -13,7 +13,7 @@ int stepperPosition = 0;
 int finDeCourse = 36;
 double dts[5];
 int distributeur_pneu = 51; 
-int valve_expi = 47; 
+int valve_expi = 50; 
 /* v
  * This function calibrate the piston's speed
  */
@@ -23,10 +23,12 @@ void Calibrate_motor(){
     pinMode(valve_expi,OUTPUT); //
     pinMode(finDeCourse, INPUT_PULLUP);
     digitalWrite(34, HIGH);
-    delay(1000);
     stepper_NEMA17.setSpeed(STEPPER_MAX_SPEED);
-    for(int i = 0; i < 4; i++){
-        stepper_NEMA17.step(-2 * STEPS_PER_REV);
+    digitalWrite(distributeur_pneu,LOW);
+    digitalWrite(valve_expi,HIGH);
+    delay(1000);
+    for(int i = 0; i < 10; i++){
+        stepper_NEMA17.step(-1 * STEPS_PER_REV);
         double temps0 = millis();
         digitalWrite(distributeur_pneu,HIGH);
         digitalWrite(valve_expi,LOW);
@@ -35,7 +37,7 @@ void Calibrate_motor(){
         bool enCourse = digitalRead(finDeCourse);
         while(enCourse){
           enCourse = digitalRead(finDeCourse);
-          Serial.println(enCourse);
+          delay(10);
         }
           Serial.println("End course");
           double temps1 = millis();
